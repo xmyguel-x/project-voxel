@@ -293,6 +293,20 @@ da largura.
 converte de volta para RGB565 na saída, porque é o formato que o frontend do libretro
 já aceitou.
 
+O renderizador tem **dois caminhos de leitura**, e é isso que revela a origem dele:
+
+```c
+#ifdef FRONTEND_SUPPORTS_RGB565
+   /* lê como RGB565 */
+#else
+   /* lê como 0RGB1555 */
+#endif
+```
+
+O PicoDrive só usa RGB565. Já o Genesis Plus GX negocia os dois — e foi sobre o GPGX
+que este renderizador foi escrito. Ver
+[PROJECT-GENESIS-GPGX.md](PROJECT-GENESIS-GPGX.md).
+
 ---
 
 ## Integração com o frontend (libretro)

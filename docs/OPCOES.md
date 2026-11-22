@@ -1,10 +1,18 @@
 # Referência de opções
 
-Todos os core options dos dois implementos, com valores e padrões.
+Todos os core options dos três implementos, com valores e padrões.
 
 ---
 
-# Project Genesis 32X
+# Project Genesis (GPGX e PicoDrive)
+
+As duas variantes do Project Genesis compartilham o **mesmo renderizador** e o
+**mesmo namespace de opções** (`project_genesis_*`), na mesma categoria
+*"Project Genesis (Voxel 3D)"*. As opções abaixo valem para as duas.
+
+> As opções do core de GPGX não foram lidas do binário — o patch dele não está
+> publicado. O que se sabe é que o namespace e a categoria são os mesmos, e que o
+> renderizador é idêntico. Ver [PROJECT-GENESIS-GPGX.md](PROJECT-GENESIS-GPGX.md).
 
 19 opções na categoria **Project Genesis (Voxel 3D)** do menu do core. Todas prefixadas
 com `project_genesis_`.

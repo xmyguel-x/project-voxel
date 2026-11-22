@@ -1,5 +1,22 @@
 # Previews
 
+Duas origens de imagens:
+
+## Em execução no RetroArch
+
+Capturas reais dos cores em funcionamento:
+
+| Arquivo | Core |
+|---|---|
+| `retroarch-project-genesis-32x-picodrive.svg` | Project Genesis 32X — `v1.0 (PicoDrive 2.05-1890c29)` |
+| `retroarch-project-genesis-gpgx.svg` | Project Genesis — `v1.0 (GPGX 1.7.4) b9c2316` |
+
+A diferença de densidade entre as duas se explica pela regra do renderizador: **pixel
+claro vira bloco alto, pixel escuro vira nada**. Um jogo com muita área preta
+produz uma cena majoritariamente vazia.
+
+## Do motor, sem o RetroArch
+
 Estas imagens foram geradas pelo próprio renderizador do patch, **sem o RetroArch**,
 usando o harness em [`../tests/voxel_test.c`](../tests/voxel_test.c).
 

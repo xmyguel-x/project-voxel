@@ -197,7 +197,12 @@ MSVC ou MinGW seguindo o `Makefile` do PicoDrive. **Esta build não foi testada.
 **1. Textos copiados de outro projeto.** As descrições de duas opções dizem
 *"Genesis Plus GX"* — este core é PicoDrive, não Genesis Plus GX. O mesmo acontecer em
 `voxel.h`, cujo comentário de cabeçalho fala em *"o framebuffer do Genesis Plus GX"*.
-É um resto de copy-paste de outro projeto e não afeta o funcionamento.
+
+Não é um erro de digitação: é a **marca da origem do renderizador**. O `voxel.c` foi
+escrito primeiro para o core **Project Genesis**, baseado em Genesis Plus GX, e depois
+reaproveitado aqui — as opções, o namespace `project_genesis_*` e a categoria do core
+options vieram junto. A linhagem completa está em
+[PROJECT-GENESIS-GPGX.md](PROJECT-GENESIS-GPGX.md).
 
 **2. O modo "Plano" não é uma ausência de blocos.** A altura é 0, mas o renderer
 mantém uma espessura mínima de `0.6 × step`. O resultado é uma laje plana e uniforme,
