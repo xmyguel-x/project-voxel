@@ -1,10 +1,12 @@
-# Project Genesis 32X
+# Project Genesis — modo PicoDrive (32X)
 
-O primeiro core do Project Voxel: um **emulador completo** (PicoDrive) compilado com o
-renderizador voxel 3D dentro.
+O **segundo modo** do core [Project Genesis](PROJECT-GENESIS.md): o **PicoDrive**
+compilado com o renderizador voxel 3D dentro.
 
-Ele roda **Mega Drive, Mega-CD, Master System e 32X** (além de Game Gear, SG-1000 e
-cartuchos 68k), e o quadro 2D de cada jogo é reescrito como uma cena 3D de blocos.
+É o mesmo core e o mesmo renderizador do [modo GPGX](PROJECT-GENESIS-GPGX.md) — muda a
+base de emulação, e com ela a lista de sistemas. Ele roda **Mega Drive, Mega-CD,
+Master System e 32X** (além de Game Gear, SG-1000 e cartuchos 68k), e o quadro 2D de
+cada jogo é reescrito como uma cena 3D de blocos.
 
 ---
 
@@ -202,7 +204,7 @@ Não é um erro de digitação: é a **marca da origem do renderizador**. O `vox
 escrito primeiro para o core **Project Genesis**, baseado em Genesis Plus GX, e depois
 reaproveitado aqui — as opções, o namespace `project_genesis_*` e a categoria do core
 options vieram junto. A linhagem completa está em
-[PROJECT-GENESIS-GPGX.md](PROJECT-GENESIS-GPGX.md).
+[PROJECT-GENESIS.md](PROJECT-GENESIS.md).
 
 **2. O modo "Plano" não é uma ausência de blocos.** A altura é 0, mas o renderer
 mantém uma espessura mínima de `0.6 × step`. O resultado é uma laje plana e uniforme,

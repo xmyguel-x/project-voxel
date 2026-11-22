@@ -305,7 +305,7 @@ O renderizador tem **dois caminhos de leitura**, e é isso que revela a origem d
 
 O PicoDrive só usa RGB565. Já o Genesis Plus GX negocia os dois — e foi sobre o GPGX
 que este renderizador foi escrito. Ver
-[PROJECT-GENESIS-GPGX.md](PROJECT-GENESIS-GPGX.md).
+[PROJECT-GENESIS.md](PROJECT-GENESIS.md).
 
 ---
 

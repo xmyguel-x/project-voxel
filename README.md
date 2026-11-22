@@ -4,27 +4,28 @@ Cores **libretro** que reescrevem o quadro 2D de um emulador como uma cena 3D de
 Cada pixel (ou grupo de pixels) do jogo vira um cubo com altura, cor, luz e sombra — o
 jogo continua sendo o mesmo, mas passa a ter profundidade, câmera e iluminação.
 
-O nome "Project Voxel" é o guarda-chuva do projeto. Existem hoje **três cores**, que se
-organizam em **duas arquiteturas opostas**:
+O nome "Project Voxel" é o guarda-chuva do projeto. São **dois cores**, em **duas
+arquiteturas opostas**:
 
-| | **Project Genesis 32X** | **Project Genesis** | **Retro8 Voxel** |
-|---|---|---|---|
-| O que é | Um core **emulado**: PicoDrive compilado com o renderizador voxel dentro | Um core **emulado**: Genesis Plus GX compilado com o renderizador voxel dentro | Um **wrapper**: um core que carrega outro core em tempo de execução |
-| Emula | Sega Mega Drive, Mega-CD, Master System, **32X**, Game Gear, SG-1000 | Sega Mega Drive, Mega-CD, Master System, Game Gear, SG-1000 | PICO-8 (console fantasy) |
-| Base | `libretro/picodrive` @ `1890c29` | `libretro/genesis-plus-gx` @ `b9c2316` | `libretro/retro8` (PICO-8) |
-| Como o voxel entra | O patch **modifica o código-fonte** do emulador e intercepta `retro_run` | Idem — mesmo renderizador, mesmas opções | O wrapper **intercepta** o framebuffer que o core interno entrega |
-| Acoplamento ao core | Total — o renderizador é parte do binário | Total | Nenhum — qualquer core compatível serve, desde que o `.so` interno esteja na mesma pasta |
-| Precisa do core original | Não | Não | **Sim** — `retro8_libretro.so` (ou `retro8_libretro_android.so`) na mesma pasta |
-| Tamanho do binário | ~2,3 MB (emulador completo + voxel) | ~1 MB | ~56 KB (só o wrapper + renderizador) |
-| Cenário | Cena 3D com blocos, chão e fundo | Cena 3D com blocos, chão e fundo | Cena 3D com **carcaça de videogame**, cujos botões afundam ao apertar |
-| Formato de origem | RGB565 (o PicoDrive exige RGB565) | RGB565 **ou** XRGB1555 | XRGB8888, com suporte a RGB565 e 0RGB1555 |
-| Renderização | Painter's algorithm, sem z-buffer | Painter's algorithm, sem z-buffer | **z-buffer** com rasterização de triângulos |
-| Código-fonte | No [patch](patches/project-genesis-32x.patch) deste repositório | ⚠️ Patch não publicado | Publicado em [`xmyguel-x/retro8_voxel`](https://github.com/xmyguel-x/retro8_voxel) |
+| | **Project Genesis** | **Retro8 Voxel** |
+|---|---|---|
+| O que é | Um core **emulado**: um emulador Sega com o renderizador voxel compilado dentro | Um **wrapper**: um core que carrega outro core em tempo de execução |
+| Modos | **2** — modo *GPGX* e modo *PicoDrive (32X)* | 1 |
+| Emula | Sega Mega Drive, Mega-CD, Master System, Game Gear, SG-1000 — **+ 32X** no modo PicoDrive | PICO-8 (console fantasy) |
+| Como o voxel entra | O patch **modifica o código-fonte** do emulador e intercepta `retro_run` | O wrapper **intercepta** o framebuffer que o core interno entrega |
+| Acoplamento ao core | Total — o renderizador é parte do binário | Nenhum — qualquer core compatível serve, desde que o `.so` interno esteja na mesma pasta |
+| Precisa do core original | Não | **Sim** — `retro8_libretro.so` (ou `retro8_libretro_android.so`) na mesma pasta |
+| Tamanho do binário | ~1 MB (modo GPGX) · ~2,3 MB (modo PicoDrive) | ~56 KB (só o wrapper + renderizador) |
+| Cenário | Cena 3D com blocos, chão e fundo | Cena 3D com **carcaça de videogame**, cujos botões afundam ao apertar |
+| Formato de origem | RGB565 **ou** XRGB1555 (GPGX) · RGB565 (PicoDrive) | XRGB8888, com suporte a RGB565 e 0RGB1555 |
+| Renderização | Painter's algorithm, sem z-buffer | **z-buffer** com rasterização de triângulos |
+| Código-fonte | Patch do modo PicoDrive neste repositório; o do GPGX não está publicado | Publicado em [`xmyguel-x/retro8_voxel`](https://github.com/xmyguel-x/retro8_voxel) |
 
-> **Os dois "Project Genesis" são o mesmo projeto em duas bases.** O renderizador
-> nasceu no core de Genesis Plus GX e foi reaproveitado no PicoDrive — as sobras
-> textuais da origem estão documentadas em
-> [PROJECT-GENESIS-GPGX.md](docs/PROJECT-GENESIS-GPGX.md).
+> **Os 2 modos do Project Genesis.** É **o mesmo core** com duas bases de emulação:
+> o modo *GPGX* (Genesis Plus GX) e o modo *PicoDrive (32X)*, que acrescenta o 32X.
+> Ambos compartilham o mesmo renderizador, as mesmas 19 opções `project_genesis_*` e a
+> mesma categoria *"Project Genesis (Voxel 3D)"*. Detalhes em
+> [docs/PROJECT-GENESIS.md](docs/PROJECT-GENESIS.md).
 
 ---
 
@@ -43,9 +44,9 @@ formas, e o projeto implementa as duas de propósito:
    renderização voxel. Não precisa tocar no emulador, funciona com qualquer core, e
    adiciona recursos que o core original não tem — como a carcaça de console.
 
-O [Retro8 Voxel](docs/RETRO8-VOXEL.md) é o segundo caminho. Os dois
-[Project Genesis](docs/PROJECT-GENESIS-32X.md) são o primeiro — e como o PicoDrive já
-roda Mega Drive, Mega-CD e 32X na mesma base, ele virou a variante "32X".
+O [Retro8 Voxel](docs/RETRO8-VOXEL.md) é o segundo caminho. O
+[Project Genesis](docs/PROJECT-GENESIS.md) é o primeiro — e como o PicoDrive já roda
+Mega Drive, Mega-CD e 32X na mesma base, ele virou o segundo modo do core.
 
 ---
 
@@ -87,13 +88,13 @@ Os detalhes de cada etapa estão em **[docs/RENDERIZADOR-VOXEL.md](docs/RENDERIZ
 
 ### Em execução no RetroArch
 
-| Project Genesis 32X (PicoDrive) | Project Genesis (Genesis Plus GX) |
-|---|---|
-| ![Project Genesis 32X rodando no RetroArch](previews/retroarch-project-genesis-32x-picodrive.svg) | ![Project Genesis rodando no RetroArch](previews/retroarch-project-genesis-gpgx.svg) |
-| `Project Genesis 32X v1.0 (PicoDrive 2.05-1890c29)` — cena densa, com terreno, água e vegetação convertidos em blocos | `Project Genesis v1.0 (GPGX 1.7.4) b9c2316` — cena esparsa: o jogo tem muita área preta, e pixel preto vira bloco de altura zero |
+| Modo GPGX — Sonic em voxel 3D | Modo GPGX — cena esparsa | Modo PicoDrive (32X) |
+|---|---|---|
+| ![Project Genesis modo GPGX, Sonic em voxel 3D](previews/retroarch-project-genesis-gpgx-sonic.svg) | ![Project Genesis modo GPGX, cena esparsa](previews/retroarch-project-genesis-gpgx.svg) | ![Project Genesis 32X, modo PicoDrive](previews/retroarch-project-genesis-32x-picodrive.svg) |
 
-A diferença de densidade entre as duas é a consequência direta da regra do renderizador:
-**pixel claro vira bloco alto, pixel escuro vira nada**.
+A diferença de densidade entre as duas capturas do modo GPGX é a consequência direta da
+regra do renderizador: **pixel claro vira bloco alto, pixel escuro vira nada**. Um jogo
+com muita área preta (fundo de tela) produz uma cena majoritariamente vazia.
 
 ### Do motor, sem o RetroArch
 
@@ -122,7 +123,7 @@ Para regenerar: `bash tests/run_previews.sh` (detalhes em
 | Renderização real de cena 3D | ✅ 4 modos/ câmeras renderizados, conferidos visualmente |
 | Formato do framebuffer do PicoDrive | ✅ `RETRO_PIXEL_FORMAT_RGB565` na commit base |
 | Project Genesis 32X rodando no RetroArch | ✅ Captura real com jogo em cena 3D densa |
-| Project Genesis (GPGX) rodando no RetroArch | ✅ Captura real — `v1.0 (GPGX 1.7.4) b9c2316` |
+| Project Genesis modo GPGX rodando no RetroArch | ✅ Captura real — `v1.0 (GPGX 1.7.4) b9c2316` |
 | Base GPGX verificada no upstream | ✅ `library_version = "v1.7.4"`, RGB565 com fallback XRGB1555, sem núcleo SH2 |
 
 O renderizador foi exercitado **fora** do RetroArch, com o hook `VOX_TEST` que o
@@ -139,9 +140,10 @@ rasterização de forma isolada.
 ├── LEIA-ME.txt                        ← instruções originais de uso
 ├── docs/
 │   ├── RENDERIZADOR-VOXEL.md          ← como o renderizador 3D funciona por dentro
-│   ├── PROJECT-GENESIS-GPGX.md         ← core 1: o patch no Genesis Plus GX
-│   ├── PROJECT-GENESIS-32X.md         ← core 2: o patch no PicoDrive
-│   ├── RETRO8-VOXEL.md                ← core 3: o wrapper do PICO-8
+│   ├── PROJECT-GENESIS.md             ← o core e seus 2 modos
+│   ├── PROJECT-GENESIS-GPGX.md        ← modo GPGX: Genesis Plus GX
+│   ├── PROJECT-GENESIS-32X.md         ← modo PicoDrive (32X): o patch
+│   ├── RETRO8-VOXEL.md                ← o wrapper do PICO-8
 │   ├── OPCOES.md                     ← referência de todas as opções
 │   └── INSTALACAO.md                  ← instalar no RetroArch e compilar
 ├── patches/
@@ -155,8 +157,9 @@ rasterização de forma isolada.
 │   └── run_previews.sh                ← gera os previews
 └── previews/
     ├── README.md                      ← como e por que os previews são SVG
-    ├── retroarch-project-genesis-32x-picodrive.svg
+    ├── retroarch-project-genesis-gpgx-sonic.svg
     ├── retroarch-project-genesis-gpgx.svg
+    ├── retroarch-project-genesis-32x-picodrive.svg
     ├── relevo_iso.svg
     ├── diorama_low.svg
     ├── neon_cinema.svg
@@ -199,13 +202,13 @@ são ~71.680 células por quadro — cada uma com até 5 faces. É por isso que 
 
 | Item | Situação |
 |---|---|
-| Core Linux x86_64 | ✅ Compilado a partir do patch e **rodando no RetroArch** com jogo real em cena 3D |
+| Modo GPGX | ✅ Confirmado rodando no RetroArch — `v1.0 (GPGX 1.7.4) b9c2316` |
+| Modo PicoDrive (32X) | ✅ Compilado a partir do patch e **rodando no RetroArch** com jogo real em cena 3D |
 | ROMs de 32X | ⚠️ Não testado |
 | Mega-CD | ⚠️ Não testado |
 | Build Android (Termux) | ⚠️ Não testado |
 | DLL do Windows | ⚠️ Não testado |
-| Project Genesis (GPGX) | ✅ Confirmado rodando no RetroArch — `v1.0 (GPGX 1.7.4) b9c2316` |
-| Patch do GPGX | ⚠️ Não publicado neste repositório |
+| Patch do modo GPGX | ⚠️ Não publicado neste repositório |
 | Retro8 Voxel — código-fonte | ✅ Publicado em [`xmyguel-x/retro8_voxel`](https://github.com/xmyguel-x/retro8_voxel) |
 | Retro8 Voxel — binário com as 15 opções | ⚠️ Código-fonte não publicado; analisado por reverse engineering neste repositório |
 | Retro8 Voxel — com o retro8 real em aparelho | ⚠️ Não testado |

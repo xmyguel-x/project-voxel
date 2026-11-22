@@ -1,11 +1,11 @@
-# Project Genesis (Genesis Plus GX)
+# Project Genesis — modo GPGX
 
-A **primeira** implementação do Project Voxel e a que originou o renderizador: o
-**Genesis Plus GX** (GPGX) compilado com o motor voxel 3D dentro.
+O **primeiro modo** do core [Project Genesis](PROJECT-GENESIS.md), e a origem do
+renderizador: o **Genesis Plus GX** (GPGX) compilado com o motor voxel 3D dentro.
 
-É o mesmo projeto do [Project Genesis 32X](PROJECT-GENESIS-32X.md), com outra base de
-emulação. O nome do core no RetroArch é **Project Genesis** — sem o "32X" porque o
-GPGX não emula o 32X.
+É o mesmo core e o mesmo renderizador do
+[modo PicoDrive (32X)](PROJECT-GENESIS-32X.md) — muda a base de emulação. O nome do
+core no RetroArch é **Project Genesis** — sem o "32X" porque o GPGX não emula o 32X.
 
 ```
 RetroArch  →  Project Genesis v1.0 (GPGX 1.7.4) b9c2316
