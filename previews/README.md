@@ -4,16 +4,17 @@ Duas origens de imagens:
 
 ## Em execução no RetroArch
 
-Capturas reais dos cores em funcionamento:
+Capturas reais do core em funcionamento:
 
-| Arquivo | Core |
-|---|---|
-| `retroarch-project-genesis-32x-picodrive.svg` | Project Genesis 32X — `v1.0 (PicoDrive 2.05-1890c29)` |
-| `retroarch-project-genesis-gpgx.svg` | Project Genesis — `v1.0 (GPGX 1.7.4) b9c2316` |
+| Arquivo | Modo | O que aparece |
+|---|---|---|
+| `retroarch-project-genesis-gpgx-sonic.svg` | GPGX | Sonic e a fase inteiros convertidos em voxels 3D |
+| `retroarch-project-genesis-gpgx.svg` | GPGX | Cena esparsa — o jogo tem muita área preta, e pixel preto vira bloco de altura zero |
+| `retroarch-project-genesis-32x-picodrive.svg` | PicoDrive (32X) | Terreno, água e vegetação convertidos em blocos, com a cena preenchendo o quadro |
 
-A diferença de densidade entre as duas se explica pela regra do renderizador: **pixel
-claro vira bloco alto, pixel escuro vira nada**. Um jogo com muita área preta
-produz uma cena majoritariamente vazia.
+No modo GPGX dá para ver também a **tela do jogo como um plano inclinado** — a borda
+escura ao redor do conteúdo é a borda do framebuffer de 320×224, existente como uma
+laje de voxels inclinada no espaço.
 
 ## Do motor, sem o RetroArch
 
