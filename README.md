@@ -77,6 +77,39 @@ Os detalhes de cada etapa estão em **[docs/RENDERIZADOR-VOXEL.md](docs/RENDERIZ
 
 ---
 
+## Previews
+
+Estas imagens foram geradas **pelo próprio renderizador do patch**, sem o RetroArch,
+usando o harness em [`tests/voxel_test.c`](tests/voxel_test.c). A cena de teste é
+sintética (320×224): céu em gradiente, sol, colinas, chão xadrez e uma faixa clara.
+
+| Relevo + isométrica | Diorama + baixa | Neon + Noir | Cor para altura + frontal |
+|---|---|---|---|
+| ![Relevo, câmera isométrica](previews/relevo_iso.svg) | ![Diorama, câmera baixa](previews/diorama_low.svg) | ![Neon, paleta Noir](previews/neon_cinema.svg) | ![Cor para altura, câmera frontal](previews/coraltura_front.svg) |
+
+Para regenerar: `bash tests/run_previews.sh` (detalhes em
+[`previews/README.md`](previews/README.md)).
+
+---
+
+## Validação
+
+| Verificação | Resultado |
+|---|---|
+| Patch aplica na commit `1890c29` do PicoDrive | ✅ `git apply --check` limpo, 5 arquivos modificados + 2 novos |
+| Compilação completa do core | ✅ `make -f Makefile.libretro` gera `project_genesis_32x_libretro.so` (2,2 MB) |
+| Símbolos do renderizador exportados | ✅ `vox_enabled`, `vox_check_options`, `vox_output_size`, `vox_input`, `vox_render` |
+| Identidade do core | ✅ `Project Genesis 32X` / `v1.0 (PicoDrive 2.05-1890c29)` |
+| As 19 opções `project_genesis_*` presentes | ✅ |
+| Renderização real de cena 3D | ✅ 4 modos/ câmeras renderizados, conferidos visualmente |
+| Formato do framebuffer do PicoDrive | ✅ `RETRO_PIXEL_FORMAT_RGB565` na commit base |
+
+O renderizador foi exercitado **fora** do RetroArch, com o hook `VOX_TEST` que o
+próprio patch expõe — o que valida a geometria, a câmera, as paletas e a
+rasterização de forma isolada.
+
+---
+
 ## Estrutura do repositório
 
 ```
@@ -93,8 +126,17 @@ Os detalhes de cada etapa estão em **[docs/RENDERIZADOR-VOXEL.md](docs/RENDERIZ
 │   └── project-genesis-32x.patch      ← patch aplicado sobre o PicoDrive
 ├── scripts/
 │   └── build_termux_32x.sh            ← compila o core no Termux (Android)
-└── cores/
-    └── project_genesis_32x_libretro_android.info
+├── cores/
+│   └── project_genesis_32x_libretro_android.info
+├── tests/
+│   ├── voxel_test.c                   ← harness que renderiza sem o RetroArch
+│   └── run_previews.sh                ← gera os previews
+└── previews/
+    ├── README.md                      ← como e por que os previews são SVG
+    ├── relevo_iso.svg
+    ├── diorama_low.svg
+    ├── neon_cinema.svg
+    └── coraltura_front.svg
 ```
 
 ---
