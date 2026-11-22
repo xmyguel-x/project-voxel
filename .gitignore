@@ -1,0 +1,20 @@
+# Build do script do Termux
+picodrive/
+*.o
+*.so
+*.dll
+*.dylib
+
+# Artefatos de build
+build/
+out/
+*.a
+
+# Binarios de core ficam fora do git (use releases ou o build local)
+cores/*.so
+cores/*.dll
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.swp
