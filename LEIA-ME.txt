@@ -1,0 +1,13 @@
+Project Genesis 32X (PicoDrive + voxel 3D) - roda Mega Drive, Mega-CD, Master System E 32X.
+
+PC Windows: copie project_genesis_32x_libretro.dll para a pasta "cores" do RetroArch.
+PC Linux:   use project_genesis_32x_libretro_linux_x86_64.so.
+Celular:    no Termux rode  bash build_termux_32x.sh  (gera project_genesis_32x_libretro_android.so).
+Info:       copie os .info para a pasta de info do RetroArch (para o core aparecer nos sugeridos).
+
+Opcoes: Opcoes do nucleo > Project Genesis (Voxel 3D). Analogico direito orbita a camera; R3 reseta.
+Os jogos de 32X precisam da BIOS do 32X na pasta system do RetroArch (32X_G_BIOS.BIN, 32X_M_BIOS.BIN, 32X_S_BIOS.BIN) conforme o PicoDrive.
+Mega-CD precisa das BIOS do Mega-CD (bios_CD_U.bin / bios_CD_E.bin / bios_CD_J.bin).
+
+Testado: .so Linux com uma ROM de Mega Drive de teste (modos, camera, paleta funcionam).
+NAO testado: ROMs de 32X, Mega-CD, o build Android e a DLL rodando.

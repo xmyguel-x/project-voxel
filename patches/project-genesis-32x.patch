@@ -1,0 +1,933 @@
+diff --git a/Makefile b/Makefile
+index d1b42aa..785922f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -258,6 +258,7 @@ USE_FRONTEND = 1
+ endif
+ ifeq "$(PLATFORM)" "libretro"
+ OBJS += platform/libretro/libretro.o
++OBJS += platform/libretro/voxel.o
+ OBJS += platform/libretro/libretro-common/compat/compat_strcasestr.o
+ ifneq ($(STATIC_LINKING), 1)
+ CFLAGS += -DHAVE_ZLIB
+diff --git a/Makefile.libretro b/Makefile.libretro
+index af871cb..7d29024 100644
+--- a/Makefile.libretro
++++ b/Makefile.libretro
+@@ -42,7 +42,7 @@ USE_LIBRETRO_VFS := 1
+ STATIC_LINKING:= 0
+ STATIC_LINKING_LINK:= 0
+ LOW_MEMORY := 0
+-TARGET_NAME := picodrive
++TARGET_NAME := project_genesis_32x
+ LIBM := -lm
+ GIT_REVISION ?= -$(shell git rev-parse --short HEAD || echo unknown)
+ CFLAGS += -DREVISION=\"$(GIT_REVISION)\"
+diff --git a/platform/libretro/libretro.c b/platform/libretro/libretro.c
+index 207350d..6c40049 100644
+--- a/platform/libretro/libretro.c
++++ b/platform/libretro/libretro.c
+@@ -90,6 +90,8 @@ static uint64_t page_table[2] = {0, 0};
+ #include <compat/strcasestr.h>
+ 
+ static retro_log_printf_t log_cb;
++#include "voxel.h"
++
+ static retro_video_refresh_t video_cb;
+ static retro_input_poll_t input_poll_cb;
+ static retro_input_state_t input_state_cb;
+@@ -687,8 +689,8 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
+ void retro_get_system_info(struct retro_system_info *info)
+ {
+    memset(info, 0, sizeof(*info));
+-   info->library_name = "PicoDrive";
+-   info->library_version = VERSION;
++   info->library_name = "Project Genesis 32X";
++   info->library_version = "v1.0 (PicoDrive " VERSION ")";
+    info->valid_extensions = EXTENSIONS;
+    info->need_fullpath = true;
+ }
+@@ -711,6 +713,19 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
+       common_width = vout_aspect * tv_height;
+ 
+    info->geometry.aspect_ratio = common_width / vout_height;
++
++   /* Project Genesis: reserva o tamanho maximo do modo voxel e, com ele ligado,
++    * usa a resolucao de saida do renderizador 3D. */
++   if (info->geometry.max_width  < VOX_MAX_W) info->geometry.max_width  = VOX_MAX_W;
++   if (info->geometry.max_height < VOX_MAX_H) info->geometry.max_height = VOX_MAX_H;
++   if (vox_enabled())
++   {
++      unsigned vw, vh;
++      vox_output_size(&vw, &vh);
++      info->geometry.base_width   = vw;
++      info->geometry.base_height  = vh;
++      info->geometry.aspect_ratio = (float)vw / (float)vh;
++   }
+ }
+ 
+ /* savestates */
+@@ -2103,6 +2118,10 @@ static void update_variables(bool first_run)
+                vm_current_start_col, vm_current_col_count);
+    }
+ 
++   /* Project Genesis: opcoes do modo voxel */
++   if (vox_check_options(environ_cb) && !first_run)
++      libretro_update_geometry = true;
++
+    /* Reinitialise frameskipping, if required */
+    if (((frameskip_type != old_frameskip_type) ||
+         (Pico.rom && PicoIn.regionOverride != OldPicoRegionOverride)) &&
+@@ -2569,6 +2588,24 @@ void retro_run(void)
+    buff = (char*)vout_buf + vout_offset;
+ #endif
+ 
++   if (vox_enabled())
++   {
++      const uint16_t *vf;
++      unsigned vw, vh;
++      vox_input(input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_X),
++                input_state_cb(0, RETRO_DEVICE_ANALOG, RETRO_DEVICE_INDEX_ANALOG_RIGHT, RETRO_DEVICE_ID_ANALOG_Y),
++                false);
++      if (input_state_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3))
++         vox_input(0, 0, true);
++      vf = vox_render((const uint16_t *)buff, vout_width, vout_height, vout_width * 2);
++      if (vf)
++      {
++         vox_output_size(&vw, &vh);
++         video_cb(vf, vw, vh, vw * 2);
++         return;
++      }
++   }
++
+    video_cb((short *)buff, vout_width, vout_height, vout_width * 2);
+ }
+ 
+diff --git a/platform/libretro/libretro_core_options.h b/platform/libretro/libretro_core_options.h
+index aa5e859..dd8d67c 100644
+--- a/platform/libretro/libretro_core_options.h
++++ b/platform/libretro/libretro_core_options.h
+@@ -51,6 +51,11 @@ extern "C" {
+ 
+ 
+ struct retro_core_option_v2_category option_cats_us[] = {
++   {
++      "voxel",
++      "Project Genesis (Voxel 3D)",
++      "Modo voxel 3D: transforma cada pixel do jogo em um bloco, com camera, luz, paletas e varios modos."
++   },
+    {
+       "system",
+       "System",
+@@ -446,6 +451,335 @@ struct retro_core_option_v2_definition option_defs_us[] = {
+       },
+       "disabled"
+    },
++   {
++      "project_genesis_voxel",
++      "Voxel 3D",
++      NULL,
++      "Liga o renderizador voxel 3D. Desligado mostra a imagem 2D normal do Genesis Plus GX.",
++      NULL,
++      "voxel",
++      {
++         { "enabled", "Ligado" },
++         { "disabled", "Desligado" },
++         { NULL, NULL },
++      },
++      "enabled"
++   },
++   {
++      "project_genesis_mode",
++      "Modo 3D",
++      NULL,
++      "Relevo: altura pela luminosidade. Plano: blocos rasos. Diorama: degraus de altura. Neon: blocos brilhantes. Cor para altura: altura pela cor.",
++      NULL,
++      "voxel",
++      {
++         { "relief", "Relevo" },
++         { "flat", "Plano" },
++         { "diorama", "Diorama" },
++         { "neon", "Neon" },
++         { "colorheight", "Cor para altura" },
++         { NULL, NULL },
++      },
++      "relief"
++   },
++   {
++      "project_genesis_palette",
++      "Paleta",
++      NULL,
++      "Recolore a imagem por luminosidade.",
++      NULL,
++      "voxel",
++      {
++         { "original", "Original" },
++         { "megablue", "Mega azul" },
++         { "phosphor", "Fosforo verde" },
++         { "sunset", "Sunset" },
++         { "noir", "Noir" },
++         { NULL, NULL },
++      },
++      "original"
++   },
++   {
++      "project_genesis_camera",
++      "Camera",
++      NULL,
++      "Posicao da camera. Use o analogico direito para orbitar e R3 para resetar.",
++      NULL,
++      "voxel",
++      {
++         { "front", "Frontal" },
++         { "iso", "Isometrica" },
++         { "cinema", "Cinema" },
++         { "low", "Baixa (diorama)" },
++         { "side", "Lateral" },
++         { "orbit", "Orbita automatica" },
++         { NULL, NULL },
++      },
++      "iso"
++   },
++   {
++      "project_genesis_zoom",
++      "Zoom",
++      NULL,
++      "Aproxima ou afasta a camera.",
++      NULL,
++      "voxel",
++      {
++         { "70", "70%" },
++         { "80", "80%" },
++         { "90", "90%" },
++         { "100", "100%" },
++         { "110", "110%" },
++         { "120", "120%" },
++         { "135", "135%" },
++         { "150", "150%" },
++         { NULL, NULL },
++      },
++      "100"
++   },
++   {
++      "project_genesis_depth",
++      "Profundidade",
++      NULL,
++      "Altura maxima dos blocos.",
++      NULL,
++      "voxel",
++      {
++         { "2", "2" },
++         { "4", "4" },
++         { "6", "6" },
++         { "8", "8" },
++         { "10", "10" },
++         { "14", "14" },
++         { "18", "18" },
++         { "24", "24" },
++         { "32", "32" },
++         { "40", "40" },
++         { NULL, NULL },
++      },
++      "14"
++   },
++   {
++      "project_genesis_gap",
++      "Espaco entre voxels",
++      NULL,
++      "Frestas escuras entre os blocos (em % do tamanho do bloco).",
++      NULL,
++      "voxel",
++      {
++         { "0", "0%" },
++         { "4", "4%" },
++         { "8", "8%" },
++         { "15", "15%" },
++         { "25", "25%" },
++         { "35", "35%" },
++         { NULL, NULL },
++      },
++      "8"
++   },
++   {
++      "project_genesis_step",
++      "Tamanho do voxel",
++      NULL,
++      "1 = um voxel por pixel (mais detalhe). 2 e 4 agrupam pixels e ficam bem mais rapidos.",
++      NULL,
++      "voxel",
++      {
++         { "1", "1x (detalhado)" },
++         { "2", "2x" },
++         { "4", "4x (rapido)" },
++         { NULL, NULL },
++      },
++      "1"
++   },
++   {
++      "project_genesis_resolution",
++      "Resolucao de saida",
++      NULL,
++      "Resolucao do quadro 3D. Resolucoes menores sao mais leves em celulares.",
++      NULL,
++      "voxel",
++      {
++         { "10", "1x (320x224)" },
++         { "15", "1.5x (480x336)" },
++         { "20", "2x (640x448)" },
++         { "30", "3x (960x672)" },
++         { NULL, NULL },
++      },
++      "15"
++   },
++   {
++      "project_genesis_light_angle",
++      "Direcao da luz",
++      NULL,
++      "Angulo da luz em graus.",
++      NULL,
++      "voxel",
++      {
++         { "0", "0 graus" },
++         { "45", "45 graus" },
++         { "90", "90 graus" },
++         { "135", "135 graus" },
++         { "180", "180 graus" },
++         { "225", "225 graus" },
++         { "270", "270 graus" },
++         { "315", "315 graus" },
++         { NULL, NULL },
++      },
++      "45"
++   },
++   {
++      "project_genesis_light",
++      "Intensidade da luz",
++      NULL,
++      "Forca da luz direcional.",
++      NULL,
++      "voxel",
++      {
++         { "0", "0%" },
++         { "25", "25%" },
++         { "50", "50%" },
++         { "75", "75%" },
++         { "100", "100%" },
++         { "125", "125%" },
++         { "150", "150%" },
++         { "200", "200%" },
++         { NULL, NULL },
++      },
++      "100"
++   },
++   {
++      "project_genesis_ambient",
++      "Luz ambiente",
++      NULL,
++      "Luz minima nas faces dos blocos.",
++      NULL,
++      "voxel",
++      {
++         { "20", "20%" },
++         { "30", "30%" },
++         { "40", "40%" },
++         { "45", "45%" },
++         { "55", "55%" },
++         { "65", "65%" },
++         { "80", "80%" },
++         { NULL, NULL },
++      },
++      "45"
++   },
++   {
++      "project_genesis_saturation",
++      "Saturacao",
++      NULL,
++      "Intensidade das cores.",
++      NULL,
++      "voxel",
++      {
++         { "60", "60%" },
++         { "80", "80%" },
++         { "100", "100%" },
++         { "115", "115%" },
++         { "130", "130%" },
++         { "150", "150%" },
++         { "180", "180%" },
++         { NULL, NULL },
++      },
++      "115"
++   },
++   {
++      "project_genesis_contrast",
++      "Contraste",
++      NULL,
++      "Contraste da imagem.",
++      NULL,
++      "voxel",
++      {
++         { "70", "70%" },
++         { "85", "85%" },
++         { "100", "100%" },
++         { "115", "115%" },
++         { "130", "130%" },
++         { "160", "160%" },
++         { NULL, NULL },
++      },
++      "100"
++   },
++   {
++      "project_genesis_glow",
++      "Brilho (glow)",
++      NULL,
++      "Brilho proprio dos blocos. No modo Neon o efeito e maior.",
++      NULL,
++      "voxel",
++      {
++         { "0", "0%" },
++         { "20", "20%" },
++         { "40", "40%" },
++         { "60", "60%" },
++         { "100", "100%" },
++         { "150", "150%" },
++         { NULL, NULL },
++      },
++      "40"
++   },
++   {
++      "project_genesis_scanlines",
++      "Scanlines",
++      NULL,
++      "Escurece linhas alternadas de voxels, como um monitor CRT.",
++      NULL,
++      "voxel",
++      {
++         { "disabled", "Desligado" },
++         { "enabled", "Ligado" },
++         { NULL, NULL },
++      },
++      "disabled"
++   },
++   {
++      "project_genesis_floor",
++      "Chao",
++      NULL,
++      "Mostra um chao escuro sob o diorama.",
++      NULL,
++      "voxel",
++      {
++         { "enabled", "Ligado" },
++         { "disabled", "Desligado" },
++         { NULL, NULL },
++      },
++      "enabled"
++   },
++   {
++      "project_genesis_background",
++      "Fundo",
++      NULL,
++      "Cor do fundo atras da cena.",
++      NULL,
++      "voxel",
++      {
++         { "black", "Preto" },
++         { "navy", "Azul-marinho" },
++         { "gray", "Cinza" },
++         { "light", "Claro" },
++         { NULL, NULL },
++      },
++      "black"
++   },
++   {
++      "project_genesis_stick",
++      "Analogico direito orbita",
++      NULL,
++      "Usa o analogico direito do controle 1 para girar a camera.",
++      NULL,
++      "voxel",
++      {
++         { "enabled", "Ligado" },
++         { "disabled", "Desligado" },
++         { NULL, NULL },
++      },
++      "enabled"
++   },
+    { NULL, NULL, NULL, NULL, NULL, NULL, {{0}}, NULL },
+ };
+ 
+diff --git a/platform/libretro/voxel.c b/platform/libretro/voxel.c
+new file mode 100644
+index 0000000..b638a71
+--- /dev/null
++++ b/platform/libretro/voxel.c
+@@ -0,0 +1,441 @@
++/* Project Genesis - renderizador voxel por software (C99, sem dependências). */
++#ifndef FRONTEND_SUPPORTS_RGB565
++#define FRONTEND_SUPPORTS_RGB565 1
++#endif
++#include <math.h>
++#include <stdlib.h>
++#include <string.h>
++#include "voxel.h"
++
++#define MAXGRID_W 720
++#define MAXGRID_H 576
++#define MAXCELLS  130000
++#define DEG2RAD   0.017453292519943295f
++
++typedef struct { int en, mode, pal, depth, gap, step, la, li, amb, sat, con, glow, scan, floor, cam, zoom, res, bg, stick; } vopts_t;
++
++static vopts_t o = { 1, 0, 0, 14, 8, 1, 45, 100, 45, 115, 100, 40, 0, 1, 1, 100, 15, 0, 1 };
++static int prev_en = 1, prev_res = 15;
++
++/* saída */
++static uint16_t outbuf[VOX_MAX_W * VOX_MAX_H];
++static int OW = 480, OH = 336;
++
++/* células */
++typedef struct { uint8_t r, g, b, h; } cell_t;
++static cell_t cells[MAXCELLS];
++
++/* câmera */
++static float cur_az = 0.f, cur_tl = 0.f, cur_zoom = 1.f, off_az = 0.f, off_tl = 0.f;
++static unsigned frame_no = 0;
++static int cam_init = 0;
++
++static const uint8_t pal_tab[5][9] = {
++   {0,0,0, 0,0,0, 0,0,0},
++   {0,16,48,   26,92,255,  232,242,255},  /* Mega azul */
++   {4,26,4,    47,191,47,  200,255,200},  /* Fósforo   */
++   {42,10,58,  255,90,60,  255,233,160},  /* Sunset    */
++   {0,0,0,     120,120,120, 255,255,255}  /* Noir      */
++};
++static const uint8_t bg_tab[4][6] = {  /* topo rgb, base rgb */
++   {6,7,12,    14,16,26},
++   {8,20,64,   2,6,24},
++   {40,40,46,  16,16,20},
++   {200,204,214, 120,124,136}
++};
++
++/* ---------- opções ---------- */
++static const char *getv(retro_environment_t env, const char *key)
++{
++   struct retro_variable v;
++   v.key = key; v.value = NULL;
++   if (env && env(RETRO_ENVIRONMENT_GET_VARIABLE, &v) && v.value) return v.value;
++   return NULL;
++}
++static int pick(const char *s, const char *const *names, int n, int def)
++{
++   int i;
++   if (!s) return def;
++   for (i = 0; i < n; i++) if (!strcmp(s, names[i])) return i;
++   return def;
++}
++static int num(const char *s, int def) { return s ? atoi(s) : def; }
++
++bool vox_enabled(void) { return o.en != 0; }
++
++void vox_output_size(unsigned *w, unsigned *h)
++{
++   *w = (unsigned)OW; *h = (unsigned)OH;
++}
++
++bool vox_check_options(retro_environment_t env)
++{
++   static const char *const modes[] = {"relief","flat","diorama","neon","colorheight"};
++   static const char *const pals[]  = {"original","megablue","phosphor","sunset","noir"};
++   static const char *const cams[]  = {"front","iso","cinema","low","side","orbit"};
++   static const char *const bgs[]   = {"black","navy","gray","light"};
++   const char *s;
++   int res_x10;
++
++   s = getv(env, "project_genesis_voxel");          o.en    = pick(s, (const char *const[]){"disabled","enabled"}, 2, 1);
++   s = getv(env, "project_genesis_mode");           o.mode  = pick(s, modes, 5, 0);
++   s = getv(env, "project_genesis_palette");        o.pal   = pick(s, pals, 5, 0);
++   s = getv(env, "project_genesis_depth");          o.depth = num(s, 14);
++   s = getv(env, "project_genesis_gap");            o.gap   = num(s, 8);
++   s = getv(env, "project_genesis_step");           o.step  = num(s, 1);
++   s = getv(env, "project_genesis_light_angle");    o.la    = num(s, 45);
++   s = getv(env, "project_genesis_light");          o.li    = num(s, 100);
++   s = getv(env, "project_genesis_ambient");        o.amb   = num(s, 45);
++   s = getv(env, "project_genesis_saturation");     o.sat   = num(s, 115);
++   s = getv(env, "project_genesis_contrast");       o.con   = num(s, 100);
++   s = getv(env, "project_genesis_glow");           o.glow  = num(s, 40);
++   s = getv(env, "project_genesis_scanlines");      o.scan  = pick(s, (const char *const[]){"disabled","enabled"}, 2, 0);
++   s = getv(env, "project_genesis_floor");          o.floor = pick(s, (const char *const[]){"disabled","enabled"}, 2, 1);
++   s = getv(env, "project_genesis_camera");         o.cam   = pick(s, cams, 6, 1);
++   s = getv(env, "project_genesis_zoom");           o.zoom  = num(s, 100);
++   s = getv(env, "project_genesis_resolution");     res_x10 = num(s, 15);
++   s = getv(env, "project_genesis_background");     o.bg    = pick(s, bgs, 4, 0);
++   s = getv(env, "project_genesis_stick");          o.stick = pick(s, (const char *const[]){"disabled","enabled"}, 2, 1);
++
++   if (o.step < 1) o.step = 1;
++   if (res_x10 < 10) res_x10 = 10;
++   if (res_x10 > 30) res_x10 = 30;
++   o.res = res_x10;
++   OW = (320 * res_x10) / 10;
++   OH = (224 * res_x10) / 10;
++
++   {
++      bool changed = (o.en != prev_en) || (o.res != prev_res);
++      prev_en = o.en; prev_res = o.res;
++      return changed;
++   }
++}
++
++void vox_input(int rx, int ry, bool reset)
++{
++   if (!o.stick) return;
++   if (reset) { off_az = 0.f; off_tl = 0.f; return; }
++   if (abs(rx) > 6500) off_az += ((float)rx / 32768.f) * 1.6f;
++   if (abs(ry) > 6500) off_tl += ((float)ry / 32768.f) * 1.2f;
++   if (off_tl > 85.f) off_tl = 85.f;
++   if (off_tl < -85.f) off_tl = -85.f;
++}
++
++/* ---------- raster ---------- */
++static inline uint16_t pack(int r, int g, int b)
++{
++   if (r > 255) r = 255;
++   if (g > 255) g = 255;
++   if (b > 255) b = 255;
++#ifdef FRONTEND_SUPPORTS_RGB565
++   return (uint16_t)(((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3));
++#else
++   return (uint16_t)(((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3));
++#endif
++}
++
++static void fill_quad(const float *p, uint16_t col)
++{
++   float minx = p[0], maxx = p[0], miny = p[1], maxy = p[1];
++   float A[4], B[4], C[4], area = 0.f, sgn;
++   int i, y0, y1, y;
++
++   for (i = 1; i < 4; i++) {
++      if (p[2*i] < minx) minx = p[2*i];
++      if (p[2*i] > maxx) maxx = p[2*i];
++      if (p[2*i+1] < miny) miny = p[2*i+1];
++      if (p[2*i+1] > maxy) maxy = p[2*i+1];
++   }
++   if (maxx < -1.f || minx > (float)OW || maxy < -1.f || miny > (float)OH) return;
++   y0 = (int)floorf(miny - 0.5f); y1 = (int)ceilf(maxy + 0.5f);
++   if (y0 < 0) y0 = 0;
++   if (y1 > OH - 1) y1 = OH - 1;
++   if (y0 > y1) return;
++
++   for (i = 0; i < 4; i++) {
++      int j = (i + 1) & 3;
++      area += p[2*i] * p[2*j+1] - p[2*j] * p[2*i+1];
++   }
++   if (fabsf(area) < 1e-3f) return;
++   sgn = area < 0.f ? -1.f : 1.f;
++
++   for (i = 0; i < 4; i++) {
++      int j = (i + 1) & 3;
++      float ax = p[2*i], ay = p[2*i+1];
++      float dx = p[2*j] - ax, dy = p[2*j+1] - ay;
++      A[i] = -sgn * dy;
++      B[i] =  sgn * dx;
++      C[i] =  sgn * (-dx * ay + dy * ax) + 0.4f * (fabsf(dx) + fabsf(dy));
++   }
++
++   /* varredura por linha: intervalo de x onde as 4 meias-planos são satisfeitas */
++   for (y = y0; y <= y1; y++) {
++      float yy = (float)y + 0.5f, xl = -1e9f, xr = 1e9f;
++      int x0, x1, x, ok = 1;
++      for (i = 0; i < 4; i++) {
++         float t = B[i] * yy + C[i];
++         if (A[i] > 1e-6f)       { float v = -t / A[i]; if (v > xl) xl = v; }
++         else if (A[i] < -1e-6f) { float v = -t / A[i]; if (v < xr) xr = v; }
++         else if (t < 0.f) { ok = 0; break; }
++      }
++      if (!ok) continue;
++      x0 = (int)ceilf(xl - 0.5f); x1 = (int)floorf(xr - 0.5f);
++      if (x0 < 0) x0 = 0;
++      if (x1 > OW - 1) x1 = OW - 1;
++      if (x0 <= x1) { uint16_t *row = outbuf + y * OW; for (x = x0; x <= x1; x++) row[x] = col; }
++   }
++}
++
++static int make_order(int n, int c, int *out)
++{
++   int k = 0, i;
++   if (c < 0) { for (i = n - 1; i >= 0; i--) out[k++] = i; }
++   else if (c >= n) { for (i = 0; i < n; i++) out[k++] = i; }
++   else {
++      for (i = 0; i <= c; i++) out[k++] = i;
++      for (i = n - 1; i > c; i--) out[k++] = i;
++   }
++   return k;
++}
++
++static inline float clampf(float v, float a, float b) { return v < a ? a : (v > b ? b : v); }
++
++/* ---------- render ---------- */
++const uint16_t *vox_render(const uint16_t *src, unsigned w, unsigned h, size_t pitch_bytes)
++{
++   int gw = (int)w, gh = (int)h, step = o.step, nx, ny, i, j;
++   size_t pitch = pitch_bytes / 2;
++   float sat = o.sat / 100.f, con = o.con / 100.f, glow = o.glow / 100.f;
++   float depth = (float)o.depth, gap = o.gap / 100.f;
++
++   if (gw > MAXGRID_W) gw = MAXGRID_W;
++   if (gh > MAXGRID_H) gh = MAXGRID_H;
++   if (gw < 8 || gh < 8) return NULL;
++   while ((gw / step) * (gh / step) > MAXCELLS - 1000) step++;
++   nx = gw / step; ny = gh / step;
++   frame_no++;
++
++   /* 1) quadro -> células (cor ajustada + altura) */
++   for (j = 0; j < ny; j++) {
++      for (i = 0; i < nx; i++) {
++         int sx, sy, n = 0, sr = 0, sg = 0, sb = 0;
++         float r, g, b, l, hh;
++         cell_t *c = &cells[j * nx + i];
++         for (sy = 0; sy < step; sy++) {
++            const uint16_t *row = src + (size_t)(j * step + sy) * pitch + i * step;
++            for (sx = 0; sx < step; sx++) {
++               uint16_t px = row[sx];
++#ifdef FRONTEND_SUPPORTS_RGB565
++               sr += (px >> 11) << 3; sg += ((px >> 5) & 63) << 2; sb += (px & 31) << 3;
++#else
++               sr += ((px >> 10) & 31) << 3; sg += ((px >> 5) & 31) << 3; sb += (px & 31) << 3;
++#endif
++               n++;
++            }
++         }
++         r = (float)sr / n; g = (float)sg / n; b = (float)sb / n;
++         l = 0.299f * r + 0.587f * g + 0.114f * b;
++         r = l + (r - l) * sat; g = l + (g - l) * sat; b = l + (b - l) * sat;
++         r = (r - 128.f) * con + 128.f; g = (g - 128.f) * con + 128.f; b = (b - 128.f) * con + 128.f;
++         r = clampf(r, 0.f, 255.f); g = clampf(g, 0.f, 255.f); b = clampf(b, 0.f, 255.f);
++         l = (0.299f * r + 0.587f * g + 0.114f * b) / 255.f;
++         if (o.pal > 0) {
++            const uint8_t *t = pal_tab[o.pal];
++            if (l < 0.5f) { float k = l * 2.f; r = t[0] + (t[3]-t[0])*k; g = t[1] + (t[4]-t[1])*k; b = t[2] + (t[5]-t[2])*k; }
++            else          { float k = l * 2.f - 1.f; r = t[3] + (t[6]-t[3])*k; g = t[4] + (t[7]-t[4])*k; b = t[5] + (t[8]-t[5])*k; }
++         }
++         switch (o.mode) {
++            case 1:  hh = 0.f; break;                               /* plano */
++            case 2:  hh = floorf(l * 5.f) / 5.f; break;             /* diorama: degraus */
++            case 4: {                                               /* cor -> altura */
++               float mx = r > g ? (r > b ? r : b) : (g > b ? g : b);
++               float mn = r < g ? (r < b ? r : b) : (g < b ? g : b);
++               if (mx - mn > 20.f) hh = (r >= g && r >= b) ? 0.9f : ((g >= b) ? 0.5f : 0.2f);
++               else hh = 0.05f;
++               break; }
++            default: hh = l; break;                                 /* relevo / neon */
++         }
++         if (o.mode == 3) { r *= 0.55f; g *= 0.55f; b *= 0.55f; }
++         if (o.scan && (j & 1)) { r *= 0.72f; g *= 0.72f; b *= 0.72f; }
++         c->r = (uint8_t)r; c->g = (uint8_t)g; c->b = (uint8_t)b;
++         c->h = (uint8_t)(hh * 255.f + 0.5f);
++      }
++   }
++
++   /* 2) câmera */
++   {
++      static const float pre_tl[6] = {0.f, 48.f, 28.f, 68.f, 35.f, 40.f};
++      static const float pre_az[6] = {0.f, 30.f, -18.f, 0.f, 55.f, 0.f};
++      float tt_tl = pre_tl[o.cam] + off_tl, tt_az = pre_az[o.cam] + off_az;
++      float tl, az, fov, tf, dist, f, cx, cy, hz_mid;
++      float Cx, Cy, Cz, fx, fy, fz, rx, ry, rz, ux, uy, uz;
++      float L[3], facTop, facXp, facXm, facYp, facYm, hx, hy;
++      float gl_add;
++      int rowo[MAXGRID_H], colo[MAXGRID_W], nr, nc, ci, cj, a, b;
++      int bg0r, bg0g, bg0b, bg1r, bg1g, bg1b, y, x;
++
++      if (o.cam == 5) tt_az += 38.f * sinf((float)frame_no * 0.012f);
++      if (tt_tl > 85.f) tt_tl = 85.f;
++      if (tt_tl < 0.f) tt_tl = 0.f;
++      if (!cam_init) { cur_az = tt_az; cur_tl = tt_tl; cur_zoom = o.zoom / 100.f; cam_init = 1; }
++      cur_az += (tt_az - cur_az) * 0.18f;
++      cur_tl += (tt_tl - cur_tl) * 0.18f;
++      cur_zoom += ((o.zoom / 100.f) - cur_zoom) * 0.25f;
++      tl = cur_tl * DEG2RAD; az = cur_az * DEG2RAD;
++
++      fov = 40.f * DEG2RAD;
++      tf = tanf(fov * 0.5f);
++      f = ((float)OH * 0.5f) / tf;
++      cx = (float)OW * 0.5f; cy = (float)OH * 0.5f;
++      {
++         float asp = (float)OW / (float)OH;
++         float d1 = ((float)gh * 0.5f) / tf;
++         float d2 = ((float)gw * 0.5f) / (tf * asp);
++         dist = (d1 > d2 ? d1 : d2) * 1.06f / (cur_zoom > 0.2f ? cur_zoom : 0.2f);
++      }
++      hz_mid = 0.25f * depth * (float)step;
++      Cx = dist * sinf(tl) * sinf(az);
++      Cy = -dist * sinf(tl) * cosf(az);
++      Cz = dist * cosf(tl) + hz_mid;
++      /* olha para (0,0,hz_mid) */
++      fx = -Cx; fy = -Cy; fz = -(Cz - hz_mid);
++      { float n = sqrtf(fx*fx + fy*fy + fz*fz); fx /= n; fy /= n; fz /= n; }
++      rx = cosf(az); ry = sinf(az); rz = 0.f;
++      ux = ry * fz - rz * fy; uy = rz * fx - rx * fz; uz = rx * fy - ry * fx;
++
++      /* luz */
++      {
++         float la = (float)o.la * DEG2RAD, n;
++         L[0] = cosf(la) * 0.55f; L[1] = sinf(la) * 0.55f; L[2] = 0.85f;
++         n = sqrtf(L[0]*L[0] + L[1]*L[1] + L[2]*L[2]); L[0] /= n; L[1] /= n; L[2] /= n;
++      }
++      {
++         float amb = o.amb / 100.f, li = o.li / 100.f;
++         facTop = amb + li * L[2];
++         facXp = amb + li * (L[0] > 0.f ? L[0] : 0.f);
++         facXm = amb + li * (-L[0] > 0.f ? -L[0] : 0.f);
++         facYp = amb + li * (L[1] > 0.f ? L[1] : 0.f);
++         facYm = amb + li * (-L[1] > 0.f ? -L[1] : 0.f);
++      }
++      gl_add = glow * (o.mode == 3 ? 1.6f : 0.35f);
++
++      /* 3) fundo + chão */
++      bg0r = bg_tab[o.bg][0]; bg0g = bg_tab[o.bg][1]; bg0b = bg_tab[o.bg][2];
++      bg1r = bg_tab[o.bg][3]; bg1g = bg_tab[o.bg][4]; bg1b = bg_tab[o.bg][5];
++      for (y = 0; y < OH; y++) {
++         int k = (y * 256) / OH;
++         uint16_t c = pack(bg0r + ((bg1r - bg0r) * k >> 8), bg0g + ((bg1g - bg0g) * k >> 8), bg0b + ((bg1b - bg0b) * k >> 8));
++         uint16_t *row = outbuf + y * OW;
++         for (x = 0; x < OW; x++) row[x] = c;
++      }
++      hx = (float)gw * 0.5f; hy = (float)gh * 0.5f;
++      if (o.floor) {
++         float m = 16.f, q[8], px[4] = {-hx - m, hx + m, hx + m, -hx - m}, py[4] = {hy + m, hy + m, -hy - m, -hy - m};
++         for (a = 0; a < 4; a++) {
++            float vx = px[a] - Cx, vy = py[a] - Cy, vz = 0.f - Cz;
++            float zc = vx*fx + vy*fy + vz*fz;
++            if (zc < 1.f) zc = 1.f;
++            q[2*a]   = cx + (vx*rx + vy*ry + vz*rz) * f / zc;
++            q[2*a+1] = cy - (vx*ux + vy*uy + vz*uz) * f / zc;
++         }
++         fill_quad(q, o.bg == 3 ? pack(150, 154, 166) : pack(22, 25, 36));
++      }
++
++      /* 4) células, de trás para frente */
++      ci = (int)floorf((Cx + hx) / (float)step);
++      cj = (int)floorf((hy - Cy) / (float)step);
++      nr = make_order(ny, cj, rowo);
++      nc = make_order(nx, ci, colo);
++
++      for (a = 0; a < nr; a++) {
++         j = rowo[a];
++         for (b = 0; b < nc; b++) {
++            cell_t *c;
++            float hz, wx, wy, half, vx, vy, vz, zc, s, sx, sy;
++            float ex0, ex1, ey0, ey1, ez0, ez1, q[8];
++            float gl;
++            int r, g, bl;
++            i = colo[b];
++            c = &cells[j * nx + i];
++            hz = (0.6f + ((float)c->h / 255.f) * depth) * (float)step;
++            wx = ((float)i + 0.5f) * (float)step - hx;
++            wy = hy - ((float)j + 0.5f) * (float)step;
++            half = 0.5f * (float)step * (1.f - gap);
++            vx = wx - Cx; vy = wy - Cy; vz = hz - Cz;
++            zc = vx*fx + vy*fy + vz*fz;
++            if (zc < 2.f) continue;
++            s = f / zc;
++            sx = cx + (vx*rx + vy*ry + vz*rz) * s;
++            sy = cy - (vx*ux + vy*uy + vz*uz) * s;
++            if (sx < -40.f || sx > (float)OW + 40.f || sy < -80.f || sy > (float)OH + 80.f) continue;
++            ex0 = rx * s * half;  ex1 = -ux * s * half;     /* meio-passo em +X */
++            ey0 = ry * s * half;  ey1 = -uy * s * half;     /* meio-passo em +Y */
++            ez0 = rz * s;         ez1 = -uz * s;            /* 1 unidade em +Z  */
++            gl = gl_add * (0.3f + (float)c->h / 255.f);
++
++            /* laterais visíveis */
++            {
++               float hn, dh;
++               struct { int vis; int ox, oy; int nbi, nbj; float fac; } sd[4];
++               int k;
++               sd[0].vis = Cx > wx + half; sd[0].ox =  1; sd[0].oy = 0; sd[0].nbi = i + 1; sd[0].nbj = j;     sd[0].fac = facXp;
++               sd[1].vis = Cx < wx - half; sd[1].ox = -1; sd[1].oy = 0; sd[1].nbi = i - 1; sd[1].nbj = j;     sd[1].fac = facXm;
++               sd[2].vis = Cy > wy + half; sd[2].ox =  0; sd[2].oy = 1; sd[2].nbi = i;     sd[2].nbj = j - 1; sd[2].fac = facYp;
++               sd[3].vis = Cy < wy - half; sd[3].ox =  0; sd[3].oy = -1; sd[3].nbi = i;    sd[3].nbj = j + 1; sd[3].fac = facYm;
++               for (k = 0; k < 4; k++) {
++                  if (!sd[k].vis) continue;
++                  if (sd[k].nbi < 0 || sd[k].nbi >= nx || sd[k].nbj < 0 || sd[k].nbj >= ny) dh = hz;
++                  else {
++                     hn = (0.6f + ((float)cells[sd[k].nbj * nx + sd[k].nbi].h / 255.f) * depth) * (float)step;
++                     dh = hz - hn;
++                     if (dh < 0.f) dh = 0.f;
++                  }
++                  if (dh <= 0.05f) continue;
++                  if (sd[k].ox) {
++                     float sgx = (float)sd[k].ox;
++                     q[0] = sx + sgx*ex0 - ey0;       q[1] = sy + sgx*ex1 - ey1;
++                     q[2] = sx + sgx*ex0 + ey0;       q[3] = sy + sgx*ex1 + ey1;
++                     q[4] = q[2] - ez0*dh;            q[5] = q[3] - ez1*dh;
++                     q[6] = q[0] - ez0*dh;            q[7] = q[1] - ez1*dh;
++                  } else {
++                     float sgy = (float)sd[k].oy;
++                     q[0] = sx - ex0 + sgy*ey0;       q[1] = sy - ex1 + sgy*ey1;
++                     q[2] = sx + ex0 + sgy*ey0;       q[3] = sy + ex1 + sgy*ey1;
++                     q[4] = q[2] - ez0*dh;            q[5] = q[3] - ez1*dh;
++                     q[6] = q[0] - ez0*dh;            q[7] = q[1] - ez1*dh;
++                  }
++                  r  = (int)((float)c->r * (sd[k].fac + gl));
++                  g  = (int)((float)c->g * (sd[k].fac + gl));
++                  bl = (int)((float)c->b * (sd[k].fac + gl));
++                  fill_quad(q, pack(r, g, bl));
++               }
++            }
++            /* topo */
++            q[0] = sx - ex0 - ey0; q[1] = sy - ex1 - ey1;
++            q[2] = sx + ex0 - ey0; q[3] = sy + ex1 - ey1;
++            q[4] = sx + ex0 + ey0; q[5] = sy + ex1 + ey1;
++            q[6] = sx - ex0 + ey0; q[7] = sy - ex1 + ey1;
++            r  = (int)((float)c->r * (facTop + gl));
++            g  = (int)((float)c->g * (facTop + gl));
++            bl = (int)((float)c->b * (facTop + gl));
++            if (fabsf(ex1) + fabsf(ey0) < 1e-3f) {          /* retângulo alinhado (câmera frontal) */
++               int xa = (int)floorf(sx - fabsf(ex0) - fabsf(ey0) + 0.1f), xb = (int)floorf(sx + fabsf(ex0) + fabsf(ey0) - 0.1f);
++               int ya = (int)floorf(sy - fabsf(ex1) - fabsf(ey1) + 0.1f), yb = (int)floorf(sy + fabsf(ex1) + fabsf(ey1) - 0.1f);
++               uint16_t col = pack(r, g, bl);
++               int yy, xx;
++               if (xa < 0) xa = 0;
++               if (ya < 0) ya = 0;
++               if (xb > OW - 1) xb = OW - 1;
++               if (yb > OH - 1) yb = OH - 1;
++               for (yy = ya; yy <= yb; yy++) { uint16_t *row = outbuf + yy * OW; for (xx = xa; xx <= xb; xx++) row[xx] = col; }
++            } else fill_quad(q, pack(r, g, bl));
++            (void)ez0; (void)ez1;
++         }
++      }
++   }
++   return outbuf;
++}
++
++#ifdef VOX_TEST
++void vox_test_set(int mode, int cam) { o.mode = mode; o.cam = cam; cam_init = 0; }
++#endif
+diff --git a/platform/libretro/voxel.h b/platform/libretro/voxel.h
+new file mode 100644
+index 0000000..94de3e1
+--- /dev/null
++++ b/platform/libretro/voxel.h
+@@ -0,0 +1,23 @@
++/* Project Genesis - renderizador voxel por software para o core libretro.
++ * Recebe o framebuffer 16 bits do Genesis Plus GX e devolve um quadro 3D em voxels. */
++#ifndef PG_VOXEL_H
++#define PG_VOXEL_H
++
++#include <stdint.h>
++#include <stddef.h>
++#include <stdbool.h>
++#include "libretro.h"
++
++#define VOX_MAX_W 960
++#define VOX_MAX_H 672
++
++bool vox_enabled(void);
++/* Lê as opções do frontend. Retorna true se ligar/desligar ou a resolução de saída mudou. */
++bool vox_check_options(retro_environment_t env);
++void vox_output_size(unsigned *w, unsigned *h);
++/* Entrada: analógico direito orbita a câmera, R3 reseta. */
++void vox_input(int rx, int ry, bool reset);
++/* src: pixels do emulador (RGB565, ou XRGB1555 sem FRONTEND_SUPPORTS_RGB565). */
++const uint16_t *vox_render(const uint16_t *src, unsigned w, unsigned h, size_t pitch_bytes);
++
++#endif
