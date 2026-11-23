@@ -1,5 +1,7 @@
 # Project Voxel
 
+> **Site do projeto:** <https://xmyguel-x.github.io/project-voxel/>
+
 Cores **libretro** que reescrevem o quadro 2D de um emulador como uma cena 3D de blocos.
 Cada pixel (ou grupo de pixels) do jogo vira um cubo com altura, cor, luz e sombra — o
 jogo continua sendo o mesmo, mas passa a ter profundidade, câmera e iluminação.
@@ -145,11 +147,13 @@ rasterização de forma isolada.
 │   ├── PROJECT-GENESIS-32X.md         ← modo PicoDrive (32X): o patch
 │   ├── RETRO8-VOXEL.md                ← o wrapper do PICO-8
 │   ├── OPCOES.md                     ← referência de todas as opções
-│   └── INSTALACAO.md                  ← instalar no RetroArch e compilar
+│   ├── INSTALACAO.md                  ← instalar no RetroArch e compilar
+│   └── RELEASE-NOTES-v1.0.md          ← notas da release
 ├── patches/
 │   └── project-genesis-32x.patch      ← patch aplicado sobre o PicoDrive
 ├── scripts/
-│   └── build_termux_32x.sh            ← compila o core no Termux (Android)
+│   ├── build_termux_32x.sh            ← compila o core no Termux (Android)
+│   └── build_release.sh               ← monta o pacote de release (Linux/Windows/Android)
 ├── cores/
 │   └── project_genesis_32x_libretro_android.info
 ├── tests/
