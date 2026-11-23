@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Voxel — cores libretro com renderização 3D de voxels</title>
+<meta name="description" content="Cores libretro que reescrevem o quadro 2D de um emulador como uma cena 3D de blocos. Project Genesis (Genesis Plus GX e PicoDrive) e Retro8 Voxel (PICO-8).">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 29 10v12L16 29 3 22V10z' fill='none' stroke='%232f6f5e' stroke-width='2.5' stroke-linejoin='round'/%3E%3Cpath d='M16 3v13M16 16l13-6M16 16 3 10' fill='none' stroke='%232f6f5e' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f7f5f0; --card:#ffffff; --line:#e9e3d6; --line-soft:#f0ebe0;
+  --ink:#14171e; --ink-2:#3a4256; --ink-3:#7c7a72;
+  --primary:#2f6f5e; --primary-2:#4a8e7c; --accent:#c97b3f;
+  --shadow:0 4px 16px -2px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:'Outfit',sans-serif; font-size:16.5px; line-height:1.68;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(680px 420px at 12% -6%, rgba(47,111,94,.09), transparent 62%),
+    radial-gradient(620px 420px at 92% 4%, rgba(201,123,63,.08), transparent 60%);
+}
+.wrap{max-width:1120px; margin:0 auto; padding:0 24px; position:relative; z-index:1}
+h1,h2{font-family:'DM Serif Display',serif; font-weight:400; letter-spacing:-.005em; margin:0}
+h1{font-size:clamp(2.6rem,6.2vw,4.4rem); line-height:1.03}
+h2{font-size:clamp(1.85rem,3.4vw,2.6rem); line-height:1.14}
+h3{font-size:1.22rem; font-weight:600; margin:0 0 .35rem; letter-spacing:-.01em}
+p{margin:0 0 1.05em}
+a{color:var(--primary)}
+code,.mono{font-family:'JetBrains Mono',monospace}
+
+header.hero{padding:78px 0 46px}
+.eyebrow{
+  display:inline-flex; align-items:center; gap:9px; font-size:.72rem; font-weight:600;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--primary);
+  background:rgba(47,111,94,.09); border:1px solid rgba(47,111,94,.18);
+  padding:6px 13px; border-radius:100px; margin-bottom:26px;
+}
+.lead{font-size:clamp(1.08rem,1.6vw,1.24rem); color:var(--ink-2); max-width:640px; margin-top:20px}
+.cta{display:flex; flex-wrap:wrap; gap:12px; margin-top:32px}
+.btn{
+  display:inline-flex; align-items:center; gap:9px; font-weight:600; font-size:.95rem;
+  padding:12px 22px; border-radius:11px; text-decoration:none; transition:all .2s; border:1px solid transparent;
+}
+.btn-p{background:var(--primary); color:#fff}
+.btn-p:hover{background:#26584b; transform:translateY(-2px); box-shadow:0 8px 22px -8px rgba(47,111,94,.7)}
+.btn-g{background:transparent; color:var(--ink); border-color:var(--line)}
+.btn-g:hover{border-color:var(--primary); color:var(--primary); transform:translateY(-2px)}
+.btn svg{width:17px; height:17px}
+
+.stats{display:flex; flex-wrap:wrap; gap:0; margin-top:44px; border-top:1px solid var(--line)}
+.stat{flex:1 1 150px; padding:22px 24px 22px 0; border-right:1px solid var(--line)}
+.stat:last-child{border-right:0}
+.stat b{display:block; font-family:'DM Serif Display',serif; font-size:1.95rem; font-weight:400; line-height:1}
+.stat span{font-size:.82rem; color:var(--ink-3)}
+
+section{padding:60px 0; border-top:1px solid var(--line)}
+.sechead{display:flex; align-items:center; gap:13px; margin-bottom:12px}
+.sechead svg{width:24px; height:24px; color:var(--primary); flex:none}
+.sechead .num{
+  font-family:'JetBrains Mono',monospace; font-size:.74rem; color:var(--ink-3);
+  border:1px solid var(--line); border-radius:6px; padding:2px 7px; background:var(--card);
+}
+.sub{color:var(--ink-2); max-width:760px; margin-bottom:30px}
+
+.shot{background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; box-shadow:var(--shadow)}
+.shot img{display:block; width:100%; height:auto}
+.shot figcaption{padding:13px 18px; font-size:.87rem; color:var(--ink-3); border-top:1px solid var(--line-soft)}
+.shot figcaption b{color:var(--ink); font-weight:600}
+figure{margin:0}
+.shotgrid{display:grid; grid-template-columns:repeat(2,1fr); gap:20px; margin-top:22px}
+.shotgrid .full{grid-column:1/-1}
+.ratio{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-top:22px}
+.ratio .shot figcaption{padding:10px 13px; font-size:.79rem}
+
+.cards{display:grid; grid-template-columns:repeat(2,1fr); gap:22px}
+.card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:28px 28px 24px; box-shadow:var(--shadow); transition:all .2s}
+.card:hover{transform:translateY(-3px); box-shadow:0 10px 30px -10px rgba(0,0,0,.14)}
+.card .tag{
+  display:inline-block; font-size:.7rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--accent); background:rgba(201,123,63,.11); padding:4px 10px; border-radius:6px; margin-bottom:14px;
+}
+.card p{font-size:.95rem; color:var(--ink-2); margin-bottom:14px}
+.card ul{margin:0; padding-left:1.1em; font-size:.92rem; color:var(--ink-2)}
+.card li{margin-bottom:5px}
+
+.modes{display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:18px}
+.mode{background:var(--card); border:1px solid var(--line); border-radius:13px; padding:18px 20px}
+.mode .mt{font-family:'JetBrains Mono',monospace; font-size:.86rem; color:var(--primary); margin-bottom:8px}
+.mode p{font-size:.9rem; color:var(--ink-2); margin:0}
+
+table{width:100%; border-collapse:collapse; font-size:.92rem}
+thead th{
+  text-align:left; font-size:.71rem; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-3);
+  font-weight:600; padding:0 14px 11px 0; border-bottom:1px solid var(--line);
+}
+tbody td{padding:11px 14px 11px 0; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--ink-2)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:rgba(47,111,94,.035)}
+td.k{font-family:'JetBrains Mono',monospace; font-size:.83rem; color:var(--ink); white-space:nowrap}
+td.v{color:var(--ink-2)}
+.tblwrap{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:24px 26px; box-shadow:var(--shadow); overflow-x:auto}
+table.tight td,table.tight th{padding-left:0; padding-right:18px}
+
+.flow{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:26px 24px; box-shadow:var(--shadow); overflow-x:auto}
+.flow .mermaid{display:flex; justify-content:center; min-width:640px}
+
+.timeline{position:relative; margin-top:8px}
+.timeline::before{content:""; position:absolute; left:22px; top:8px; bottom:10px; width:2px; background:linear-gradient(180deg,var(--primary),var(--accent))}
+.step{position:relative; padding-left:60px; margin-bottom:26px}
+.step:last-child{margin-bottom:0}
+.step-icon{position:absolute; left:6px; top:0; width:36px; height:36px; border-radius:50%; background:var(--bg); border:2px solid var(--primary); display:inline-flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:.85rem; color:var(--primary)}
+.step h3{margin-bottom:4px}
+.step p{font-size:.93rem; color:var(--ink-2); margin:0}
+
+.files{display:flex; flex-direction:column; gap:0; background:var(--card); border:1px solid var(--line); border-radius:16px; overflow:hidden; box-shadow:var(--shadow)}
+.file{display:grid; grid-template-columns:1fr auto auto; gap:16px; align-items:center; padding:15px 22px; border-bottom:1px solid var(--line-soft); transition:background .15s}
+.file:last-child{border-bottom:0}
+.file:hover{background:rgba(47,111,94,.035)}
+.file .fn{font-family:'JetBrains Mono',monospace; font-size:.87rem; color:var(--ink); word-break:break-all}
+.file .fs{font-family:'JetBrains Mono',monospace; font-size:.8rem; color:var(--ink-3); white-space:nowrap}
+.file .fs.wrap{white-space:normal; text-align:right; max-width:180px}
+.file .fp{font-size:.74rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); white-space:nowrap}
+.file .fp.linux{color:#3a4256}.file .fp.win{color:#c97b3f}.file .fp.android{color:#2f6f5e}.file .fp.src{color:#7c7a72}
+
+.note{background:rgba(201,123,63,.08); border:1px solid rgba(201,123,63,.24); border-radius:13px; padding:16px 20px; font-size:.92rem; color:var(--ink-2); margin-top:20px}
+.note b{color:var(--ink)}
+
+.doclist{display:grid; grid-template-columns:repeat(2,1fr); gap:12px}
+.doc{display:flex; gap:12px; align-items:flex-start; text-decoration:none; color:inherit; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:15px 18px; transition:all .2s}
+.doc:hover{border-color:var(--primary); transform:translateY(-2px); box-shadow:var(--shadow)}
+.doc svg{width:19px; height:19px; color:var(--primary); flex:none; margin-top:2px}
+.doc b{display:block; font-size:.95rem; font-weight:600; color:var(--ink)}
+.doc span{font-size:.83rem; color:var(--ink-3)}
+
+footer{padding:46px 0 62px; border-top:1px solid var(--line); color:var(--ink-3); font-size:.88rem}
+footer a{color:var(--ink-2)}
+.footgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:26px; margin-bottom:34px}
+.footgrid b{display:block; color:var(--ink); font-size:.92rem; margin-bottom:9px; font-weight:600}
+.footgrid a{display:block; padding:3px 0; text-decoration:none}
+.footgrid a:hover{color:var(--primary)}
+.fine{border-top:1px solid var(--line); padding-top:22px; font-size:.82rem; display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap}
+
+@media (max-width:860px){
+  .cards,.shotgrid,.doclist,.footgrid{grid-template-columns:1fr}
+  .ratio{grid-template-columns:repeat(2,1fr)}
+  .modes{grid-template-columns:1fr}
+  .stat{border-right:0; border-bottom:1px solid var(--line); flex-basis:50%; padding:18px 0}
+  .stats{margin-top:34px}
+  section{padding:46px 0}
+  .file{grid-template-columns:1fr auto; gap:8px 12px}
+  .file .fp{grid-column:2}
+}
+@media (max-width:520px){
+  .ratio{grid-template-columns:1fr}
+  .btn{width:100%; justify-content:center}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="eyebrow">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" style="width:14px;height:14px"><path d="m12 2 9 5v10l-9 5-9-5V7z"/><path d="M12 12v10M12 12 3 7M12 12l9-5"/></svg>
+    Cores libretro · renderização 3D por software
+  </span>
+  <h1>Project&nbsp;Voxel</h1>
+  <p class="lead">Cada pixel do emulador vira um bloco com altura, cor, luz e sombra.
+  O jogo continua sendo o mesmo — mas passa a ter profundidade, câmera e iluminação.</p>
+  <div class="cta">
+    <a class="btn btn-p" href="https://github.com/xmyguel-x/project-voxel/releases">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+      Baixar os cores
+    </a>
+    <a class="btn btn-g" href="#cores">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h20"/><path d="M12 2v20"/></svg>
+      Como funciona
+    </a>
+  </div>
+  <div class="stats">
+    <div class="stat"><b>2</b><span>cores libretro</span></div>
+    <div class="stat"><b>2</b><span>modos do Project Genesis</span></div>
+    <div class="stat"><b>19</b><span>opções de renderização</span></div>
+    <div class="stat"><b>0</b><span>OpenGL, shaders, GPU</span></div>
+  </div>
+</header>
+
+<section id="screenshots" style="border-top:0;padding-top:8px">
+  <div class="sechead">
+    <span class="num">01</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+    <h2>Em execução</h2>
+  </div>
+  <p class="sub">Capturas reais do RetroArch. O core <b>Project Genesis</b> no modo GPGX
+  (Sonic) e no modo PicoDrive — o mesmo renderizador, bases de emulação diferentes.</p>
+
+  <figure class="shot">
+    <img src="assets/shot-sonic.svg" alt="Sonic renderizado em voxels 3D no modo GPGX do Project Genesis" width="1366" height="768" loading="lazy">
+    <figcaption><b>Project Genesis · modo GPGX</b> — <span class="mono">v1.0 (GPGX 1.7.4) b9c2316</span>.
+    A tela do jogo aparece como uma laje de voxels inclinada; a borda escura ao redor do conteúdo é a borda do framebuffer de 320×224.</figcaption>
+  </figure>
+
+  <div class="shotgrid">
+    <figure class="shot">
+      <img src="assets/shot-esparsa.svg" alt="Cena voxel esparsa no modo GPGX" width="1366" height="768" loading="lazy">
+      <figcaption><b>Modo GPGX · cena esparsa</b> — o jogo tem muita área preta, e pixel preto vira bloco de altura zero.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="assets/shot-picodrive.svg" alt="Terreno denso em voxels no modo PicoDrive" width="1366" height="768" loading="lazy">
+      <figcaption><b>Project Genesis 32X · modo PicoDrive</b> — <span class="mono">v1.0 (PicoDrive 2.05-1890c29)</span>. Terreno, água e vegetação convertidos em blocos.</figcaption>
+    </figure>
+  </div>
+
+  <h3 style="margin-top:46px">Do motor, sem o RetroArch</h3>
+  <p class="sub" style="margin-bottom:0">Renderizadas pelo próprio <code>voxel.c</code>, com o
+  harness em <code>tests/voxel_test.c</code>. Cada imagem usa um modo 3D, uma câmera e uma paleta diferentes.</p>
+  <div class="ratio">
+    <figure class="shot"><img src="assets/p1-relevo.svg" alt="Modo Relevo, câmera isométrica" width="640" height="448" loading="lazy"><figcaption><b>Relevo</b> · isométrica</figcaption></figure>
+    <figure class="shot"><img src="assets/p2-diorama.svg" alt="Modo Diorama, câmera baixa" width="640" height="448" loading="lazy"><figcaption><b>Diorama</b> · câmera baixa</figcaption></figure>
+    <figure class="shot"><img src="assets/p3-neon.svg" alt="Modo Neon com paleta Noir" width="640" height="448" loading="lazy"><figcaption><b>Neon</b> · paleta Noir</figcaption></figure>
+    <figure class="shot"><img src="assets/p4-coraltura.svg" alt="Modo Cor para altura, câmera frontal" width="640" height="448" loading="lazy"><figcaption><b>Cor p/ altura</b> · frontal</figcaption></figure>
+  </div>
+</section>
+
+<section id="como">
+  <div class="sechead">
+    <span class="num">02</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4zM14 14h6v6h-6zM14 4h6v6h-6zM4 14h6v6H4z"/></svg>
+    <h2>Como funciona</h2>
+  </div>
+  <p class="sub">O renderizador é, no fundo, um <b>pós-processador de framebuffer</b>: recebe a
+  imagem 2D que o emulador desenhou e devolve uma imagem 3D. Tudo em software, em C99 puro —
+  sem OpenGL, sem shaders, sem GPU.</p>
+
+  <div class="flow">
+    <div class="mermaid">
+flowchart LR
+  A["<b>Quadro 2D</b><br/>RGB565 do emulador"] --> B["<b>Amostragem</b><br/>média de cor<br/>saturação, contraste"]
+  B --> C["<b>Altura</b><br/>relevo · diorama<br/>cor · plano"]
+  C --> D["<b>Câmera</b><br/>inclinação + azimute<br/>zoom com suavização"]
+  D --> E["<b>Cena</b><br/>fundo · chão<br/>luz direcional"]
+  E --> F["<b>Desenho</b><br/>pintor<br/>de trás para frente"]
+  F --> G["<b>Rasterização</b><br/>half-planes<br/>→ RGB565"]
+    </div>
+  </div>
+
+  <p class="sub" style="margin-top:26px; margin-bottom:0">Cada bloco é um cubo com altura conforme o
+  brilho do pixel. As faces laterais só aparecem onde há degrau — como um relevo de verdade, e não
+  uma caixa para cada pixel. E a regra que explica tudo: <b>pixel claro vira bloco alto, pixel
+  escuro vira nada</b>.</p>
+</section>
+
+<section id="cores">
+  <div class="sechead">
+    <span class="num">03</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    <h2>Os dois cores</h2>
+  </div>
+  <p class="sub">Duas arquiteturas opostas, no mesmo projeto. Um core compila o renderizador
+  dentro do emulador; o outro embrulha um core que já existe.</p>
+
+  <div class="cards">
+    <article class="card">
+      <span class="tag">Patch nativo</span>
+      <h3>Project Genesis</h3>
+      <p>Um emulador Sega com o renderizador voxel compilado dentro. Duas bases de emulação,
+      dois modos — o mesmo core.</p>
+      <div class="modes">
+        <div class="mode">
+          <div class="mt">modo GPGX</div>
+          <p>Base <b>Genesis Plus GX 1.7.4</b> (<span class="mono">b9c2316</span>). Mega Drive,
+          Mega-CD, Master System, Game Gear, SG-1000. Core de ~1 MB.</p>
+        </div>
+        <div class="mode">
+          <div class="mt">modo PicoDrive (32X)</div>
+          <p>Base <b>PicoDrive 2.05</b> (<span class="mono">1890c29</span>). Os mesmos sistemas
+          <b>+ 32X</b>. Core de ~2,3 MB.</p>
+        </div>
+      </div>
+      <p style="margin-top:16px;margin-bottom:0">Os dois modos compartilham o mesmo renderizador,
+      as mesmas 19 opções <span class="mono">project_genesis_*</span> e a mesma categoria no menu do core.</p>
+    </article>
+
+    <article class="card">
+      <span class="tag">Wrapper genérico</span>
+      <h3>Retro8 Voxel</h3>
+      <p>Não modifica emulador nenhum: carrega o core PICO-8 original com
+      <span class="mono">dlopen()</span>, repassa toda a API libretro e troca só a entrega do vídeo.</p>
+      <ul>
+        <li>Cena com <b>carcaça de videogame 3D</b> — D-pad, A/B, Start/Select e ombros</li>
+        <li>Os botões <b>afundam</b> de verdade quando você aperta</li>
+        <li><b>z-buffer</b> com rasterização de triângulos, em vez de painter's algorithm</li>
+        <li>15 opções <span class="mono">r8v_*</span>: qualidade, suavização, cores, câmera</li>
+      </ul>
+      <p style="margin-top:14px;margin-bottom:0">Precisa do core original <span class="mono">retro8_libretro.so</span>
+      na <b>mesma pasta</b> de cores.</p>
+    </article>
+  </div>
+</section>
+
+<section id="comparativo">
+  <div class="sechead">
+    <span class="num">04</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+    <h2>Comparativo</h2>
+  </div>
+  <div class="tblwrap">
+    <table class="tight">
+      <thead><tr><th>Build</th><th>Base</th><th>Sistemas</th><th>Formato</th><th>Renderização</th><th>Tamanho</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Project Genesis · GPGX</td><td>Genesis Plus GX 1.7.4</td><td>MD, CD, MS, GG, SG-1000</td><td>RGB565 ou XRGB1555</td><td>Painter's algorithm</td><td>~1 MB</td></tr>
+        <tr><td class="k">Project Genesis 32X · PicoDrive</td><td>PicoDrive 2.05</td><td>MD, CD, MS, GG, SG-1000, <b>32X</b></td><td>RGB565</td><td>Painter's algorithm</td><td>~2,3 MB</td></tr>
+        <tr><td class="k">Retro8 Voxel</td><td>PICO-8 (libretro/retro8)</td><td>PICO-8</td><td>XRGB8888</td><td><b>z-buffer</b> + triângulos</td><td>~56 KB</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="opcoes">
+  <div class="sechead">
+    <span class="num">05</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+    <h2>Opções</h2>
+  </div>
+  <p class="sub">As 19 opções ficam em <b>Opções do núcleo → Project Genesis (Voxel 3D)</b>.
+  As de baixo são as que mais mudam o resultado na prática.</p>
+  <div class="tblwrap">
+    <table class="tight">
+      <thead><tr><th>Chave</th><th>Opção</th><th>Valores</th></tr></thead>
+      <tbody>
+        <tr><td class="k">project_genesis_voxel</td><td>Voxel 3D</td><td class="v">Ligado · Desligado</td></tr>
+        <tr><td class="k">project_genesis_mode</td><td>Modo 3D</td><td class="v">Relevo · Plano · Diorama · Neon · Cor para altura</td></tr>
+        <tr><td class="k">project_genesis_camera</td><td>Câmera</td><td class="v">Frontal · Isométrica · Cinema · Baixa (diorama) · Lateral · Órbita automática</td></tr>
+        <tr><td class="k">project_genesis_palette</td><td>Paleta</td><td class="v">Original · Mega azul · Fósforo verde · Sunset · Noir</td></tr>
+        <tr><td class="k">project_genesis_depth</td><td>Profundidade</td><td class="v">2 · 4 · 6 · 8 · 10 · <b>14</b> · 18 · 24 · 32 · 40</td></tr>
+        <tr><td class="k">project_genesis_step</td><td>Tamanho do voxel</td><td class="v">1x (detalhado) · 2x · 4x (rápido) — <b>a alavanca de desempenho</b></td></tr>
+        <tr><td class="k">project_genesis_resolution</td><td>Resolução de saída</td><td class="v">320×224 · 480×336 · 640×448 · 960×672</td></tr>
+        <tr><td class="k">project_genesis_gap</td><td>Espaço entre voxels</td><td class="v">0% · 4% · 8% · 15% · 25% · 35%</td></tr>
+        <tr><td class="k">project_genesis_light_angle</td><td>Direção da luz</td><td class="v">0° · 45° · 90° · 135° · 180° · 225° · 270° · 315°</td></tr>
+        <tr><td class="k">project_genesis_light / _ambient</td><td>Luz e ambiente</td><td class="v">Intensidade 0–200% · Ambiente 20–80%</td></tr>
+        <tr><td class="k">project_genesis_saturation / _contrast</td><td>Cor</td><td class="v">Saturação 60–180% · Contraste 70–160%</td></tr>
+        <tr><td class="k">project_genesis_glow</td><td>Brilho</td><td class="v">0% a 150% — 4,5× mais forte no modo Neon</td></tr>
+        <tr><td class="k">project_genesis_scanlines / _floor / _background</td><td>Cena</td><td class="v">Scanlines · Chão · Fundo</td></tr>
+        <tr><td class="k">project_genesis_zoom / _stick</td><td>Câmera e controle</td><td class="v">Zoom 70–150% · Analógico direito orbita (R3 reseta)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note"><b>Desempenho:</b> o custo é proporcional ao número de células. Se o core ficar
+  lento no celular, reduza <b>Tamanho do voxel</b> para <span class="mono">2x</span> ou
+  <span class="mono">4x</span> — reduz as células em 4× e 16×. Depois, baixe a resolução de saída.</div>
+</section>
+
+<section id="downloads">
+  <div class="sechead">
+    <span class="num">06</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+    <h2>Downloads</h2>
+  </div>
+  <p class="sub">Arquivos da release <span class="mono">v1.0</span>. O pacote também traz o patch e o
+  script de build, para compilar do zero.</p>
+
+  <div class="files">
+    <div class="file"><span class="fn">project_genesis_32x_libretro_linux_x86_64.so</span><span class="fs">2,2 MB</span><span class="fp linux">Linux x86_64</span></div>
+    <div class="file"><span class="fn">project_genesis_32x_libretro.dll</span><span class="fs">2,8 MB</span><span class="fp win">Windows x86_64</span></div>
+    <div class="file"><span class="fn">project_genesis_32x_libretro_android.so</span><span class="fs wrap">gerado no Termux</span><span class="fp android">Android arm64</span></div>
+    <div class="file"><span class="fn">project_genesis_32x_libretro_android.info</span><span class="fs">612 B</span><span class="fp src">RetroArch info</span></div>
+    <div class="file"><span class="fn">retro8_voxel_libretro.so</span><span class="fs">55 KB</span><span class="fp linux">Linux x86_64</span></div>
+    <div class="file"><span class="fn">project-genesis-32x.patch</span><span class="fs">31,8 KB</span><span class="fp src">patch</span></div>
+    <div class="file"><span class="fn">build_termux_32x.sh</span><span class="fs">824 B</span><span class="fp src">build</span></div>
+  </div>
+
+  <div class="cta" style="margin-top:22px">
+    <a class="btn btn-p" href="https://github.com/xmyguel-x/project-voxel/releases">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+      Baixar a release v1.0
+    </a>
+    <a class="btn btn-g" href="https://github.com/xmyguel-x/project-voxel/blob/main/docs/RELEASE-NOTES-v1.0.md">
+      Notas da release
+    </a>
+  </div>
+
+  <h3 style="margin-top:48px">Instalando</h3>
+  <div class="timeline">
+    <div class="step">
+      <span class="step-icon">1</span>
+      <h3>Copie o core</h3>
+      <p>Windows: <span class="mono">project_genesis_32x_libretro.dll</span> para a pasta
+      <span class="mono">cores</span> do RetroArch. Linux: o <span class="mono">.so</span>.
+      Android: o <span class="mono">.so</span> arm64.</p>
+    </div>
+    <div class="step">
+      <span class="step-icon">2</span>
+      <h3>Copie o arquivo .info</h3>
+      <p>Para a pasta <span class="mono">info</span> do RetroArch — é ele que faz o core
+      aparecer na lista de sugeridos.</p>
+    </div>
+    <div class="step">
+      <span class="step-icon">3</span>
+      <h3>Coloque as BIOS</h3>
+      <p>Na pasta <span class="mono">system</span>: para 32X,
+      <span class="mono">32X_G_BIOS.BIN</span>, <span class="mono">32X_M_BIOS.BIN</span> e
+      <span class="mono">32X_S_BIOS.BIN</span>; para Mega-CD, <span class="mono">bios_CD_U.bin</span>
+      (EUA), <span class="mono">bios_CD_E.bin</span> (Europa) ou <span class="mono">bios_CD_J.bin</span> (Japão).</p>
+    </div>
+    <div class="step">
+      <span class="step-icon">4</span>
+      <h3>No Retro8 Voxel</h3>
+      <p>Coloque o <span class="mono">retro8_voxel_libretro.so</span> <b>junto</b> do
+      <span class="mono">retro8_libretro.so</span> original, na mesma pasta de cores.
+      Sem ele, o wrapper nem inicia.</p>
+    </div>
+  </div>
+
+  <div class="note"><b>As BIOS não acompanham o pacote</b>, por direitos autorais. Pegue-as por
+  conta própria e coloque na pasta <span class="mono">system</span> do RetroArch.</div>
+</section>
+
+<section id="docs">
+  <div class="sechead">
+    <span class="num">07</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+    <h2>Documentação</h2>
+  </div>
+  <p class="sub">A documentação completa vive no repositório — inclusive o código do patch
+  e um harness que renderiza cenas sem o RetroArch.</p>
+  <div class="doclist">
+    <a class="doc" href="https://github.com/xmyguel-x/project-voxel/blob/main/docs/PROJECT-GENESIS.md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5v10l-9 5-9-5V7z"/></svg><span><b>Project Genesis</b><span>o core e seus 2 modos</span></span></a>
+    <a class="doc" href="https://github.com/xmyguel-x/project-voxel/blob/main/docs/RENDERIZADOR-VOXEL.md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5v10l-9 5-9-5V7z"/><path d="M12 12v10M12 12 3 7M12 12l9-5"/></svg><span><b>Renderizador voxel</b><span>o pipeline, etapa por etapa</span></span></a>
+    <a class="doc" href="https://github.com/xmyguel-x/project-voxel/blob/main/docs/RETRO8-VOXEL.md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5v10l-9 5-9-5V7z"/></svg><span><b>Retro8 Voxel</b><span>o wrapper do PICO-8</span></span></a>
+    <a class="doc" href="https://github.com/xmyguel-x/project-voxel/blob/main/docs/OPCOES.md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5v10l-9 5-9-5V7z"/></svg><span><b>Opções</b><span>todas as chaves e valores</span></span></a>
+    <a class="doc" href="https://github.com/xmyguel-x/project-voxel/blob/main/docs/INSTALACAO.md"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5v10l-9 5-9-5V7z"/></svg><span><b>Instalação</b><span>por plataforma, com BIOS</span></span></a>
+    <a class="doc" href="https://github.com/xmyguel-x/project-voxel/tree/main/tests"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5v10l-9 5-9-5V7z"/></svg><span><b>Harness de teste</b><span>renderiza sem o RetroArch</span></span></a>
+  </div>
+</section>
+
+<footer>
+  <div class="footgrid">
+    <div>
+      <b>Project Voxel</b>
+      <a href="https://github.com/xmyguel-x/project-voxel">Repositório</a>
+      <a href="https://github.com/xmyguel-x/project-voxel/releases">Releases</a>
+      <a href="https://github.com/xmyguel-x/retro8_voxel">Fonte do wrapper</a>
+    </div>
+    <div>
+      <b>Créditos</b>
+      <a href="https://github.com/libretro/picodrive">PicoDrive</a>
+      <a href="https://github.com/libretro/genesis-plus-gx">Genesis Plus GX</a>
+      <a href="https://github.com/libretro/retro8">Retro8 (PICO-8)</a>
+    </div>
+    <div>
+      <b>Licenças</b>
+      <a href="https://github.com/libretro/picodrive/blob/master/LICENSE">PicoDrive — MAME</a>
+      <a href="https://github.com/libretro/genesis-plus-gx/blob/master/LICENSE.txt">GPGX</a>
+      <a href="https://github.com/libretro/retro8/blob/master/LICENSE">Retro8</a>
+    </div>
+  </div>
+  <div class="fine">
+    <span>Project Voxel · renderizador voxel 3D por software, sem GPU.</span>
+    <span class="mono">xMyguel_x</span>
+  </div>
+</footer>
+
+</div>
+
+<script type="module">
+import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'base',
+  themeVariables: {
+    fontFamily: 'Outfit, sans-serif',
+    fontSize: '13px',
+    primaryColor: '#ffffff',
+    primaryTextColor: '#14171e',
+    primaryBorderColor: '#2f6f5e',
+    lineColor: '#c9c1b0',
+    secondaryColor: '#f2efe7',
+    tertiaryColor: '#f7f5f0'
+  },
+  flowchart: { curve: 'basis', padding: 16, nodeSpacing: 34, rankSpacing: 44 }
+});
+</script>
+</body>
+</html>
