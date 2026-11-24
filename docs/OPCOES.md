@@ -14,7 +14,7 @@ categoria *"Project Genesis (Voxel 3D)"*. As opções abaixo valem para os dois.
 > publicado. O que se sabe é que o namespace e a categoria são os mesmos, e que o
 > renderizador é idêntico. Ver [PROJECT-GENESIS.md](PROJECT-GENESIS.md).
 
-19 opções na categoria **Project Genesis (Voxel 3D)** do menu do core. Todas prefixadas
+21 opções na categoria **Project Genesis (Voxel 3D)** do menu do core. Todas prefixadas
 com `project_genesis_`.
 
 | Chave | Rótulo | Valores | Padrão |
@@ -38,6 +38,8 @@ com `project_genesis_`.
 | `project_genesis_floor` | Chao | `Ligado` · `Desligado` | **Ligado** |
 | `project_genesis_background` | Fundo | `Preto` · `Azul-marinho` · `Cinza` · `Claro` | **Preto** |
 | `project_genesis_stick` | Analogico direito orbita | `Ligado` · `Desligado` | **Ligado** |
+| `project_genesis_auto` | Desempenho automatico (HLE) | `Equilibrado (10 ms)` · `Rapido (6 ms)` · `Qualidade (16 ms)` · `Desligado` | **Equilibrado (10 ms)** |
+| `project_genesis_fps` | Quadros do 3D | `Todos` · `Metade` · `Um terco` | **Todos** |
 
 > Os rótulos acima reproduzem os textos do core. O código-fonte original usa acentos
 > corretos (`Relevo`, `Isométrica`, `Fósforo verde`, `Órbita automática`, etc.); alguns
@@ -100,6 +102,15 @@ final. Menor é mais leve.
 
 **Analogico direito orbita** — habilita o controle de câmera pelo analógico direito do
 controle 1. `R3` reseta a câmera para a posição do modo selecionado.
+
+**Desempenho automatico (HLE)** — deixa os atalhos que não mudam a imagem
+ligados o tempo todo (quadro repetido, voxels iguais fundidos, cache de cores) e só
+reduz o tamanho do voxel sozinha quando o 3D está lento, voltando ao tamanho
+anterior quando sobra tempo. Os números são o orçamento por quadro: `Equilibrado`
+tem 10 ms, `Rapido` 6 ms, `Qualidade` 16 ms. `Desligado` desliga o ajuste.
+
+**Quadros do 3D** — desenha o 3D em menos quadros para poupar CPU; o jogo continua
+rodando a 60. `Metade` ou `Um terco` deixam a câmera menos fluida.
 
 ---
 

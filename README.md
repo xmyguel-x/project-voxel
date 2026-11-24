@@ -1,6 +1,8 @@
 # Project Voxel
 
 > **Site do projeto:** <https://xmyguel-x.github.io/project-voxel/>
+>
+> **Release v1.0 (binários):** <https://xmyguel-x.github.io/project-voxel/release.html>
 
 Cores **libretro** que reescrevem o quadro 2D de um emulador como uma cena 3D de blocos.
 Cada pixel (ou grupo de pixels) do jogo vira um cubo com altura, cor, luz e sombra — o
@@ -25,7 +27,7 @@ arquiteturas opostas**:
 
 > **Os 2 modos do Project Genesis.** É **o mesmo core** com duas bases de emulação:
 > o modo *GPGX* (Genesis Plus GX) e o modo *PicoDrive (32X)*, que acrescenta o 32X.
-> Ambos compartilham o mesmo renderizador, as mesmas 19 opções `project_genesis_*` e a
+> Ambos compartilham o mesmo renderizador, as mesmas 21 opções `project_genesis_*` e a
 > mesma categoria *"Project Genesis (Voxel 3D)"*. Detalhes em
 > [docs/PROJECT-GENESIS.md](docs/PROJECT-GENESIS.md).
 
@@ -121,7 +123,7 @@ Para regenerar: `bash tests/run_previews.sh` (detalhes em
 | Compilação completa do core | ✅ `make -f Makefile.libretro` gera `project_genesis_32x_libretro.so` (2,2 MB) |
 | Símbolos do renderizador exportados | ✅ `vox_enabled`, `vox_check_options`, `vox_output_size`, `vox_input`, `vox_render` |
 | Identidade do core | ✅ `Project Genesis 32X` / `v1.0 (PicoDrive 2.05-1890c29)` |
-| As 19 opções `project_genesis_*` presentes | ✅ |
+| As 21 opções `project_genesis_*` presentes | ✅ |
 | Renderização real de cena 3D | ✅ 4 modos/ câmeras renderizados, conferidos visualmente |
 | Formato do framebuffer do PicoDrive | ✅ `RETRO_PIXEL_FORMAT_RGB565` na commit base |
 | Project Genesis 32X rodando no RetroArch | ✅ Captura real com jogo em cena 3D densa |

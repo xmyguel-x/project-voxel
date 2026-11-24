@@ -358,5 +358,5 @@ Isso é a rede de segurança para origens grandes.
 | `platform/libretro/voxel.c` | O renderizador completo (amostragem, câmera, cena, desenho, rasterização) |
 | `platform/libretro/voxel.h` | API pública do renderizador + constantes `VOX_MAX_W/H` |
 | `platform/libretro/libretro.c` | Integração: `retro_run`, `retro_get_system_av_info`, `update_variables` |
-| `platform/libretro/libretro_core_options.h` | As 19 opções do modo voxel |
+| `platform/libretro/libretro_core_options.h` | As 21 opções do modo voxel |
 | `Makefile` / `Makefile.libretro` | Adiciona `voxel.o` ao build e renomeia o alvo |

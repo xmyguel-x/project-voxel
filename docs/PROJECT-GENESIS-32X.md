@@ -112,7 +112,7 @@ video_cb((short *)buff, vout_width, vout_height, vout_width * 2);
 ```
 
 ### `platform/libretro/libretro_core_options.h`
-Uma nova **categoria** de opções no menu do core, com 19 opções:
+Uma nova **categoria** de opções no menu do core, com 21 opções:
 
 ```c
 { "voxel", "Project Genesis (Voxel 3D)", "Modo voxel 3D: transforma cada pixel do jogo em um bloco, com camera, luz, paletas e varios modos." }
@@ -148,7 +148,7 @@ Sem essas BIOS, os respectivos jogos não inicializam.
 
 ## Opções
 
-São 19 opções na categoria **Project Genesis (Voxel 3D)**. A referência completa, com
+São 21 opções na categoria **Project Genesis (Voxel 3D)**. A referência completa, com
 todos os valores e o efeito de cada uma, está em [OPCOES.md](OPCOES.md). As três que
 mais importam no dia a dia:
 

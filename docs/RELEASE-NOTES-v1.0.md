@@ -37,6 +37,21 @@ dentro de uma **carcaça de videogame 3D**, com D-pad, A/B, Start/Select e ombro
 | `project-genesis-32x.patch` | o patch aplicado sobre o PicoDrive |
 | `build_termux_32x.sh` | compila o core direto no Termux (Android) |
 
+## Download
+
+Página de release com os binários, os hashes SHA-256 e o botão de download:
+
+**<https://xmyguel-x.github.io/project-voxel/release.html>**
+
+| Arquivo | Tamanho | SHA-256 |
+|---|---|---|
+| `project_genesis_32x_libretro.dll` | 2.944.002 B | `db2a7d33e82d3e331a51` |
+| `project_genesis_32x_libretro_linux_x86_64.so` | 2.340.392 B | `881c102c435b22fc4c07` |
+| `retro8_voxel_libretro.so` | 56.472 B | `8a8ba0486f2182ed1462` |
+| `project_genesis_32x_libretro_android.info` | 612 B | `59fc9694ebb532f11151` |
+| `project-genesis-32x.patch` | 41.340 B | `0b8e11103329a414634a` |
+| `build_termux_32x.sh` | 824 B | `2b1fcf6affbf79a2f75a` |
+
 ## Instalação
 
 **Windows** — copie `project_genesis_32x_libretro.dll` para a pasta `cores` do
@@ -66,13 +81,19 @@ RetroArch:
 
 ## Opções
 
-As 19 opções ficam em *Opções do núcleo → Project Genesis (Voxel 3D)*: modo 3D
+As 21 opções ficam em *Opções do núcleo → Project Genesis (Voxel 3D)*: modo 3D
 (relevo, plano, diorama, neon, cor para altura), paleta, câmera, zoom, profundidade,
-espaçamento entre voxels, tamanho do voxel, resolução de saída, luz e sombra.
+espaçamento entre voxels, tamanho do voxel, resolução de saída, luz e sombra, e mais
+duas de desempenho:
+
+- **Desempenho automatico (HLE)** — mantém os atalhos que não mudam a imagem sempre
+  ligados e só reduz o tamanho do voxel quando o 3D está lento. `Equilibrado (10 ms)`,
+  `Rapido (6 ms)`, `Qualidade (16 ms)` ou `Desligado`.
+- **Quadros do 3D** — desenha o 3D em menos quadros para poupar CPU; o jogo continua a 60.
 
 Dica de desempenho: se o core ficar lento no celular, reduza **Tamanho do voxel** para
 `2x` ou `4x` — é a alavanca de maior impacto, porque o custo é proporcional ao número
-de células.
+de células. Com o *Desempenho automatico* ligado, o core faz isso sozinho.
 
 ## Compilando do zero
 
@@ -93,6 +114,17 @@ No Termux (Android), use o `build_termux_32x.sh` incluído.
 
 ```bash
 sha256sum -c SHA256SUMS.txt
+```
+
+Os hashes desta release:
+
+```
+db2a7d33e82d3e331a511dd49702c7227e591a3c3c111224ab4f5bae44cb7190  project_genesis_32x_libretro.dll
+881c102c435b22fc4c076fd4641444a06ee1512bd9fc8694fd0be0bb66aa8ddf  project_genesis_32x_libretro_linux_x86_64.so
+8a8ba0486f2182ed1462e081e35cbadbadb8478bf5f0fe4fd269d5ba457fa884  retro8_voxel_libretro.so
+59fc9694ebb532f111516eba5b00efadd792d3fd98b9371da7687313a7a986bc  project_genesis_32x_libretro_android.info
+0b8e11103329a414634af8615834075a7fb98ccf3fe9af421650d69ab7b3828e  project-genesis-32x.patch
+2b1fcf6affbf79a2f75ab0f382a504a682aa308f5b0fb6a452844f80275cbf61  build_termux_32x.sh
 ```
 
 ## Mais informação

@@ -75,7 +75,7 @@ options são as mesmas nos dois modos. Numa porta de GPGX e outra de PicoDrive, 
 ## O que os dois modos têm em comum
 
 - **O mesmo renderizador** — `voxel.c` / `voxel.h`, software puro, C99, sem OpenGL.
-- **As mesmas 19 opções** `project_genesis_*` (veja [OPCOES.md](OPCOES.md)).
+- **As mesmas 21 opções** `project_genesis_*` (veja [OPCOES.md](OPCOES.md)).
 - **A mesma interação** — analógico direito orbita a câmera, `R3` reseta.
 - **A mesma cena** — grade de voxels com altura, luz direcional, chão e fundo em
   gradiente, até 960×672 de saída.
