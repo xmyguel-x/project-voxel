@@ -1,0 +1,47 @@
+[
+ {
+  "name": "project_genesis_32x_libretro.dll",
+  "kind": "binary",
+  "size": 2944002,
+  "sha256": "db2a7d33e82d3e331a511dd49702c7227e591a3c3c111224ab4f5bae44cb7190",
+  "parts": 4,
+  "gzip": 1144573
+ },
+ {
+  "name": "project_genesis_32x_libretro_linux_x86_64.so",
+  "kind": "binary",
+  "size": 2340392,
+  "sha256": "881c102c435b22fc4c076fd4641444a06ee1512bd9fc8694fd0be0bb66aa8ddf",
+  "parts": 3,
+  "gzip": 958145
+ },
+ {
+  "name": "retro8_voxel_libretro.so",
+  "kind": "binary",
+  "size": 56472,
+  "sha256": "8a8ba0486f2182ed1462e081e35cbadbadb8478bf5f0fe4fd269d5ba457fa884",
+  "parts": 1,
+  "gzip": 22642
+ },
+ {
+  "name": "project_genesis_32x_libretro_android.info",
+  "kind": "text",
+  "size": 612,
+  "sha256": "59fc9694ebb532f111516eba5b00efadd792d3fd98b9371da7687313a7a986bc",
+  "parts": 0
+ },
+ {
+  "name": "project-genesis-32x.patch",
+  "kind": "text",
+  "size": 41340,
+  "sha256": "0b8e11103329a414634af8615834075a7fb98ccf3fe9af421650d69ab7b3828e",
+  "parts": 0
+ },
+ {
+  "name": "build_termux_32x.sh",
+  "kind": "text",
+  "size": 824,
+  "sha256": "2b1fcf6affbf79a2f75ab0f382a504a682aa308f5b0fb6a452844f80275cbf61",
+  "parts": 0
+ }
+]
