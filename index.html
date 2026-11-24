@@ -221,7 +221,9 @@ table.tight td,table.tight th{padding-left:0; padding-right:18px}
 .file{display:grid; grid-template-columns:1fr auto auto; gap:16px; align-items:center; padding:15px 22px; border-bottom:1px solid var(--line); transition:background .15s}
 .file:last-child{border-bottom:0}
 .file:hover{background:rgba(74,168,255,.05)}
-.file .fn{font-family:'JetBrains Mono',monospace; font-size:.86rem; color:var(--ink); word-break:break-all}
+.file .fn{font-family:'JetBrains Mono',monospace; font-size:.86rem; color:var(--ink); word-break:break-all;
+  text-decoration:none; transition:color .15s}
+.file .fn:hover{color:var(--cyan)}
 .file .fs{font-family:'JetBrains Mono',monospace; font-size:.8rem; color:var(--ink3); white-space:nowrap}
 .file .fs.wrap{white-space:normal; text-align:right; max-width:180px}
 .file .fp{font-size:.7rem; font-weight:600; letter-spacing:.1em; text-transform:uppercase; white-space:nowrap;
@@ -368,7 +370,7 @@ body.revealed #site > *:nth-child(n+9){animation-delay:.69s}
   <p class="lead">Cada pixel do emulador vira um bloco com altura, cor, luz e sombra.
   O jogo continua sendo o mesmo — mas passa a ter profundidade, câmera e iluminação.</p>
   <div class="cta">
-    <a class="btn btn-p" href="https://github.com/xmyguel-x/project-voxel/releases">
+    <a class="btn btn-p" href="release.html">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       Baixar os cores
     </a>
@@ -598,21 +600,21 @@ flowchart LR
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
     <h2>Downloads</h2>
   </div>
-  <p class="sub">Arquivos da release <span class="mono">v1.0</span>. O pacote também traz o patch e o
-  script de build, para compilar do zero.</p>
+  <p class="sub">Arquivos da release <span class="mono">v1.0</span>, prontos para baixar — com SHA-256 conferido.
+  O pacote também traz o patch e o script de build, para compilar do zero.</p>
 
   <div class="files">
-    <div class="file"><span class="fn">project_genesis_32x_libretro_linux_x86_64.so</span><span class="fs">2,2 MB</span><span class="fp linux">Linux x86_64</span></div>
-    <div class="file"><span class="fn">project_genesis_32x_libretro.dll</span><span class="fs">2,8 MB</span><span class="fp win">Windows x86_64</span></div>
-    <div class="file"><span class="fn">project_genesis_32x_libretro_android.so</span><span class="fs wrap">gerado no Termux</span><span class="fp android">Android arm64</span></div>
-    <div class="file"><span class="fn">project_genesis_32x_libretro_android.info</span><span class="fs">612 B</span><span class="fp src">RetroArch info</span></div>
-    <div class="file"><span class="fn">retro8_voxel_libretro.so</span><span class="fs">55 KB</span><span class="fp linux">Linux x86_64</span></div>
-    <div class="file"><span class="fn">project-genesis-32x.patch</span><span class="fs">31,8 KB</span><span class="fp src">patch</span></div>
-    <div class="file"><span class="fn">build_termux_32x.sh</span><span class="fs">824 B</span><span class="fp src">build</span></div>
+    <div class="file"><a class="fn" href="release.html">project_genesis_32x_libretro_linux_x86_64.so</a><span class="fs">2,2 MB</span><span class="fp linux">Linux x86_64</span></div>
+    <div class="file"><a class="fn" href="release.html">project_genesis_32x_libretro.dll</a><span class="fs">2,8 MB</span><span class="fp win">Windows x86_64</span></div>
+    <div class="file"><a class="fn" href="release.html">project_genesis_32x_libretro_android.so</a><span class="fs wrap">gerado no Termux</span><span class="fp android">Android arm64</span></div>
+    <div class="file"><a class="fn" href="release.html">project_genesis_32x_libretro_android.info</a><span class="fs">612 B</span><span class="fp src">RetroArch info</span></div>
+    <div class="file"><a class="fn" href="release.html">retro8_voxel_libretro.so</a><span class="fs">55 KB</span><span class="fp linux">Linux x86_64</span></div>
+    <div class="file"><a class="fn" href="release.html">project-genesis-32x.patch</a><span class="fs">31,8 KB</span><span class="fp src">patch</span></div>
+    <div class="file"><a class="fn" href="release.html">build_termux_32x.sh</a><span class="fs">824 B</span><span class="fp src">build</span></div>
   </div>
 
   <div class="cta" style="margin-top:22px">
-    <a class="btn btn-p" href="https://github.com/xmyguel-x/project-voxel/releases">
+    <a class="btn btn-p" href="release.html">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
       Baixar a release v1.0
     </a>
@@ -680,7 +682,7 @@ flowchart LR
     <div>
       <b>Project Voxel</b>
       <a href="https://github.com/xmyguel-x/project-voxel">Repositório</a>
-      <a href="https://github.com/xmyguel-x/project-voxel/releases">Releases</a>
+      <a href="release.html">Release v1.0</a>
       <a href="https://github.com/xmyguel-x/retro8_voxel">Fonte do wrapper</a>
     </div>
     <div>

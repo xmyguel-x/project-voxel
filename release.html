@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Voxel — Release v1.0</title>
+<meta name="description" content="Download da release v1.0 do Project Voxel: cores libretro Project Genesis 32X e Retro8 Voxel.">
+<meta name="theme-color" content="#05070c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 29 10v12L16 29 3 22V10z' fill='%230b3fa8'/%3E%3Cpath d='M16 3 29 10 16 17 3 10z' fill='%234aa8ff'/%3E%3Cpath d='M16 17v12L3 22V10z' fill='%231b6fd4'/%3E%3Cpath d='M16 17v12l13-7V10z' fill='%230d47a8'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05070c; --bg2:#080d16; --panel:#0b111c; --panel2:#0e1624;
+  --line:#1a2436; --line2:#243149;
+  --ink:#e9f0fa; --ink2:#9db0cb; --ink3:#61748f;
+  --blue:#1b6fd4; --blue2:#4aa8ff; --cyan:#46e0ff; --gold:#f5c542;
+  --shadow:0 10px 40px -12px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--ink); font-family:'Outfit',system-ui,sans-serif;
+  font-weight:300; line-height:1.65; -webkit-font-smoothing:antialiased;
+  min-height:100vh; position:relative; overflow-x:hidden;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(900px 520px at 12% -8%, rgba(27,111,212,.30), transparent 62%),
+    radial-gradient(760px 460px at 88% 4%, rgba(70,224,255,.13), transparent 60%),
+    radial-gradient(700px 700px at 50% 108%, rgba(13,71,168,.22), transparent 62%);
+  animation:drift 26s ease-in-out infinite alternate;
+}
+body::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:1; opacity:.30;
+  background:repeating-linear-gradient(180deg, rgba(255,255,255,.028) 0 1px, transparent 1px 3px);
+}
+@keyframes drift{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  50%{transform:translate3d(-1.5%,1.5%,0) scale(1.06)}
+  100%{transform:translate3d(1.5%,-1%,0) scale(1.02)}
+}
+.wrap{position:relative; z-index:2; max-width:1080px; margin:0 auto; padding:0 24px}
+.mono{font-family:'JetBrains Mono',monospace}
+a{color:inherit}
+
+/* ---------- topo ---------- */
+header.top{
+  border-bottom:1px solid var(--line); background:rgba(5,7,12,.72);
+  backdrop-filter:blur(12px); position:sticky; top:0; z-index:40;
+}
+.top .wrap{display:flex; align-items:center; justify-content:space-between; height:70px; gap:18px}
+.brand{display:flex; align-items:center; gap:12px; text-decoration:none}
+.brand .wm{width:150px; height:auto; display:block}
+.brand .cube{width:32px; height:32px; filter:drop-shadow(0 0 10px rgba(70,224,255,.45))}
+.topnav{display:flex; align-items:center; gap:22px; font-size:14px; color:var(--ink2)}
+.topnav a{text-decoration:none; transition:color .18s}
+.topnav a:hover{color:var(--cyan)}
+
+/* ---------- hero ---------- */
+.hero{padding:62px 0 40px; text-align:center; position:relative}
+.tag{
+  display:inline-flex; align-items:center; gap:9px; font-size:12px; letter-spacing:.20em;
+  text-transform:uppercase; color:var(--cyan); border:1px solid rgba(70,224,255,.30);
+  background:rgba(70,224,255,.07); padding:6px 14px; border-radius:999px; font-weight:500;
+}
+.tag .dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 9px var(--cyan)}
+h1{
+  font-family:'DM Serif Display',serif; font-weight:400; font-size:clamp(38px,6vw,62px);
+  line-height:1.08; margin:20px 0 14px; letter-spacing:-.5px;
+  background:linear-gradient(180deg,#ffffff 0%,#a9e7ff 45%,#3f9ae8 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.lead{color:var(--ink2); max-width:680px; margin:0 auto; font-size:17px}
+.meta{display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:26px}
+.chip{
+  font-size:12.5px; font-family:'JetBrains Mono',monospace; color:var(--ink2);
+  border:1px solid var(--line2); background:rgba(14,22,36,.72); padding:6px 12px; border-radius:8px;
+}
+.chip b{color:var(--ink); font-weight:500}
+
+/* ---------- arquivos ---------- */
+section{padding:52px 0; border-top:1px solid var(--line)}
+.sechead{display:flex; align-items:center; gap:14px; margin-bottom:10px}
+.sechead .num{font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--blue2); opacity:.85}
+.sechead h2{font-family:'DM Serif Display',serif; font-weight:400; font-size:clamp(25px,3.4vw,34px); letter-spacing:-.2px}
+.sechead svg{width:22px;height:22px;color:var(--blue2);flex:none}
+.sub{color:var(--ink2); margin-bottom:26px; max-width:760px}
+
+.files{display:grid; gap:12px}
+.file{
+  display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:18px;
+  background:linear-gradient(180deg, rgba(14,22,36,.92), rgba(11,17,28,.92));
+  border:1px solid var(--line); border-radius:14px; padding:16px 18px;
+  transition:border-color .2s, transform .2s, box-shadow .2s;
+}
+.file:hover{border-color:rgba(70,224,255,.42); transform:translateY(-2px); box-shadow:0 14px 34px -18px rgba(0,0,0,.9)}
+.file .info{min-width:0}
+.file .fn{font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--ink); display:block; overflow-wrap:anywhere}
+.file .sha{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--ink3); display:block; margin-top:5px; overflow-wrap:anywhere}
+.file .sha b{color:var(--ink2); font-weight:400}
+.fp{font-size:11px; font-family:'JetBrains Mono',monospace; padding:4px 9px; border-radius:6px; white-space:nowrap}
+.fp.linux{color:#7fd4ff; background:rgba(70,224,255,.10); border:1px solid rgba(70,224,255,.28)}
+.fp.win{color:#8fb6ff; background:rgba(27,111,212,.14); border:1px solid rgba(74,168,255,.30)}
+.fp.android{color:#a5f3c4; background:rgba(34,197,94,.10); border:1px solid rgba(34,197,94,.28)}
+.fp.src{color:var(--ink2); background:rgba(255,255,255,.04); border:1px solid var(--line2)}
+.fp.pkg{color:var(--gold); background:rgba(245,197,66,.10); border:1px solid rgba(245,197,66,.30)}
+
+.dbtn{
+  display:inline-flex; align-items:center; gap:8px; cursor:pointer; white-space:nowrap;
+  font-family:'Outfit',sans-serif; font-size:13.5px; font-weight:600; color:#04121f;
+  background:linear-gradient(180deg,#7fd4ff,#2f8fe8); border:none; border-radius:10px;
+  padding:10px 17px; text-decoration:none; transition:transform .16s, box-shadow .16s, filter .16s;
+  box-shadow:0 8px 22px -12px rgba(47,143,232,.9);
+}
+.dbtn:hover{transform:translateY(-1px); filter:brightness(1.08); box-shadow:0 12px 28px -12px rgba(47,143,232,1)}
+.dbtn:active{transform:translateY(0)}
+.dbtn svg{width:16px;height:16px}
+.dbtn[disabled]{opacity:.55; cursor:progress; filter:none; transform:none}
+.dbtn.ghost{
+  background:transparent; color:var(--ink2); border:1px solid var(--line2); box-shadow:none; font-weight:500;
+}
+.dbtn.ghost:hover{color:var(--cyan); border-color:rgba(70,224,255,.45)}
+
+/* barra de progresso */
+.prog{grid-column:1/-1; height:3px; background:var(--line); border-radius:2px; overflow:hidden; display:none}
+.file.busy .prog{display:block}
+.prog i{display:block; height:100%; width:0; background:linear-gradient(90deg,#2f8fe8,#46e0ff); transition:width .2s}
+
+/* ---------- notas ---------- */
+.notes{display:grid; gap:14px}
+.note{
+  background:rgba(11,17,28,.8); border:1px solid var(--line); border-left:3px solid var(--blue);
+  border-radius:0 12px 12px 0; padding:16px 20px; color:var(--ink2);
+}
+.note b{color:var(--ink); font-weight:600}
+.note code{font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--cyan); background:rgba(70,224,255,.08); padding:1px 6px; border-radius:4px}
+.note ul{margin:8px 0 0 18px}
+.note li{margin:4px 0}
+
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px}
+.card{background:rgba(11,17,28,.78); border:1px solid var(--line); border-radius:14px; padding:20px}
+.card h3{font-size:16px; font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:9px}
+.card h3 svg{width:18px;height:18px;color:var(--blue2); flex:none}
+.card p{color:var(--ink2); font-size:14.5px}
+.card .mono{font-size:13px; color:var(--cyan)}
+
+.steps{counter-reset:s; display:grid; gap:12px}
+.step{
+  display:grid; grid-template-columns:34px 1fr; gap:14px; align-items:start;
+  background:rgba(11,17,28,.7); border:1px solid var(--line); border-radius:12px; padding:16px 18px;
+}
+.step .n{
+  counter-increment:s; width:30px; height:30px; border-radius:9px; display:grid; place-items:center;
+  background:linear-gradient(180deg,#1b6fd4,#0d47a8); color:#fff; font-family:'JetBrains Mono',monospace;
+  font-size:13px; font-weight:700;
+}
+.step .n::before{content:counter(s)}
+.step h4{font-size:15px; font-weight:600; margin-bottom:4px}
+.step p{color:var(--ink2); font-size:14px}
+.step .mono{font-family:'JetBrains Mono',monospace; color:var(--cyan); font-size:13px; overflow-wrap:anywhere}
+
+footer{border-top:1px solid var(--line); padding:34px 0 46px; color:var(--ink3); font-size:13.5px}
+footer .wrap{display:flex; flex-wrap:wrap; gap:16px; justify-content:space-between; align-items:center}
+footer a{color:var(--ink2); text-decoration:none}
+footer a:hover{color:var(--cyan)}
+.toast{
+  position:fixed; left:50%; bottom:28px; transform:translate(-50%,20px); z-index:90;
+  background:rgba(11,17,28,.96); border:1px solid rgba(70,224,255,.4); color:var(--ink);
+  padding:12px 20px; border-radius:12px; font-size:14px; box-shadow:var(--shadow);
+  opacity:0; pointer-events:none; transition:opacity .25s, transform .25s; max-width:88vw; text-align:center;
+}
+.toast.show{opacity:1; transform:translate(-50%,0)}
+.toast.err{border-color:rgba(245,197,66,.55); color:#ffe6a3}
+@media (max-width:720px){
+  .file{grid-template-columns:1fr; gap:12px}
+  .file .fp{justify-self:start}
+  .dbtn{justify-self:start}
+  .topnav .hide{display:none}
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="cubeA" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fd4ff"/><stop offset="1" stop-color="#2f8fe8"/>
+    </linearGradient>
+    <linearGradient id="cubeB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b3fa8"/><stop offset="1" stop-color="#062a63"/>
+    </linearGradient>
+    <linearGradient id="cubeC" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1560c4"/><stop offset="1" stop-color="#0d47a8"/>
+    </linearGradient>
+    <linearGradient id="wm" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eafaff"/><stop offset=".36" stop-color="#a9e7ff"/>
+      <stop offset=".60" stop-color="#5cb6ff"/><stop offset="1" stop-color="#2f8fe8"/>
+    </linearGradient>
+    <filter id="wmglow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#03163a" flood-opacity=".75"/>
+    </filter>
+    <symbol id="i-cube" viewBox="0 0 64 64">
+      <path d="M32 4 60 20v24L32 60 4 44V20z" fill="#062a63"/>
+      <path d="M32 4 60 20 32 36 4 20z" fill="url(#cubeA)"/>
+      <path d="M32 36v24L4 44V20z" fill="url(#cubeB)"/>
+      <path d="M32 36v24l28-16V20z" fill="url(#cubeC)"/>
+      <path d="M32 4 60 20 32 36 4 20z" fill="none" stroke="#bfe9ff" stroke-width="1.4" opacity=".75"/>
+    </symbol>
+    <symbol id="i-word" viewBox="60 0 340 132">
+      <text x="230" y="42" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="23"
+            font-weight="700" letter-spacing="13" fill="#9fe4ff">PROJECT</text>
+      <text x="230" y="116" text-anchor="middle" font-family="'DM Serif Display',serif" font-size="84"
+            fill="url(#wm)" stroke="#bfeaff" stroke-width=".6" paint-order="stroke" filter="url(#wmglow)">VOXEL</text>
+      <rect x="60" y="126" width="340" height="3" rx="1.5" fill="url(#wm)" opacity=".85"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./">
+      <svg class="cube" viewBox="0 0 64 64"><use href="#i-cube"/></svg>
+      <svg class="wm" viewBox="60 0 340 132"><use href="#i-word"/></svg>
+    </a>
+    <nav class="topnav">
+      <a class="hide" href="./">Projeto</a>
+      <a class="hide" href="./#downloads">Downloads</a>
+      <a class="hide" href="./#opcoes">Opções</a>
+      <a href="https://github.com/xmyguel-x/project-voxel">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero wrap">
+  <span class="tag"><span class="dot"></span>Release v1.0</span>
+  <h1>Cores prontos para rodar</h1>
+  <p class="lead">Binários compilados do <b>Project Genesis 32X</b> e do <b>Retro8 Voxel</b>, com os
+  hashes SHA-256 conferidos. Os arquivos vêm hospedados aqui — o botão reconstrói o binário no seu navegador.</p>
+  <div class="meta">
+    <span class="chip"><b>2</b> arquiteturas</span>
+    <span class="chip"><b>21</b> opções de render</span>
+    <span class="chip">PicoDrive <b>2.05</b></span>
+    <span class="chip">RetroArch <b>1.16</b>+</span>
+    <span class="chip">SHA-256 <b>conferido</b></span>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="sechead">
+      <span class="num">01</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 0 0 1-2 2H5a2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+      <h2>Arquivos da release</h2>
+    </div>
+    <p class="sub">Cada botão reconstrói o arquivo a partir das partes hospedadas e baixa o binário
+    original, byte a byte. Nada é instalado nem executado durante o download.</p>
+
+    <div class="files" id="files"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sechead">
+      <span class="num">02</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+      <h2>O que há nesta release</h2>
+    </div>
+    <div class="notes">
+      <div class="note"><b>Project Genesis 32X</b> — patch nativo do PicoDrive 2.05 que transforma o quadro
+      2D numa cena 3D de voxels. <b>21 opções</b> de render: voxel, cor, luz, ambiente, profundidade,
+      floor, scanlines, paleta e mais.</div>
+      <div class="note"><b>Dois modos no mesmo core</b> — o núcleo <span class="mono">Project Genesis</span>
+      roda o Genesis pelo caminho GPGX e o 32X pelo PicoDrive. As opções <code>project_genesis_*</code> são
+      compartilhadas pelos dois.</div>
+      <div class="note"><b>Retro8 Voxel</b> — wrapper separado que carrega o core PICO-8 via
+      <span class="mono">dlopen()</span> e reconstrói a cena 128×128 em 3D, com z-buffer e carcaça de
+      console com botões que afundam.</div>
+      <div class="note"><b>Patch e script inclusos</b> — <code>project-genesis-32x.patch</code> aplica
+      sobre o PicoDrive na commit <span class="mono">1890c29</span>, e
+      <code>build_termux_32x.sh</code> compila o <span class="mono">.so</span> de Android no Termux.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sechead">
+      <span class="num">03</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      <h2>Instalando</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="n"></div><div>
+        <h4>Baixe o core da sua plataforma</h4>
+        <p>Windows: <span class="mono">project_genesis_32x_libretro.dll</span>. Linux:
+        <span class="mono">project_genesis_32x_libretro_linux_x86_64.so</span>. Android: o
+        <span class="mono">.so</span> é gerado no Termux pelo script incluso.</p></div></div>
+      <div class="step"><div class="n"></div><div>
+        <h4>Copie para a pasta de cores</h4>
+        <p>Windows: <span class="mono">%APPDATA%\RetroArch\cores</span>. Linux:
+        <span class="mono">~/.config/retroarch/cores</span>. Android (Termux):
+        <span class="mono">~/retroarch/cores</span>.</p></div></div>
+      <div class="step"><div class="n"></div><div>
+        <h4>Copie o arquivo .info</h4>
+        <p><span class="mono">project_genesis_32x_libretro_android.info</span> na mesma pasta, com o nome
+        do core — é ele que registra a identidade <span class="mono">Project Genesis 32X</span> no
+        RetroArch.</p></div></div>
+      <div class="step"><div class="n"></div><div>
+        <h4>Reinicie o RetroArch</h4>
+        <p>O core aparece como <b>Project Genesis 32X</b>. As opções de render ficam no menu
+        <span class="mono">Core Options</span>.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Project Voxel · renderização 3D de voxels para libretro</span>
+    <span style="display:flex; gap:16px; flex-wrap:wrap">
+      <a href="./">Página do projeto</a>
+      <a href="https://github.com/xmyguel-x/project-voxel">Repositório</a>
+      <a href="https://github.com/xmyguel-x/project-voxel/blob/main/docs/RELEASE-NOTES-v1.0.md">Notas da release</a>
+    </span>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const FILES = [
+ {
+  "name": "project_genesis_32x_libretro.dll",
+  "kind": "binary",
+  "size": 2944002,
+  "sha256": "db2a7d33e82d3e331a511dd49702c7227e591a3c3c111224ab4f5bae44cb7190",
+  "parts": 4,
+  "gzip": 1144573
+ },
+ {
+  "name": "project_genesis_32x_libretro_linux_x86_64.so",
+  "kind": "binary",
+  "size": 2340392,
+  "sha256": "881c102c435b22fc4c076fd4641444a06ee1512bd9fc8694fd0be0bb66aa8ddf",
+  "parts": 3,
+  "gzip": 958145
+ },
+ {
+  "name": "retro8_voxel_libretro.so",
+  "kind": "binary",
+  "size": 56472,
+  "sha256": "8a8ba0486f2182ed1462e081e35cbadbadb8478bf5f0fe4fd269d5ba457fa884",
+  "parts": 1,
+  "gzip": 22642
+ },
+ {
+  "name": "project_genesis_32x_libretro_android.info",
+  "kind": "text",
+  "size": 612,
+  "sha256": "59fc9694ebb532f111516eba5b00efadd792d3fd98b9371da7687313a7a986bc",
+  "parts": 0
+ },
+ {
+  "name": "project-genesis-32x.patch",
+  "kind": "text",
+  "size": 41340,
+  "sha256": "0b8e11103329a414634af8615834075a7fb98ccf3fe9af421650d69ab7b3828e",
+  "parts": 0
+ },
+ {
+  "name": "build_termux_32x.sh",
+  "kind": "text",
+  "size": 824,
+  "sha256": "2b1fcf6affbf79a2f75ab0f382a504a682aa308f5b0fb6a452844f80275cbf61",
+  "parts": 0
+ }
+];
+
+const LABEL = {
+  "project_genesis_32x_libretro_linux_x86_64.so": ["linux", "Linux x86_64"],
+  "project_genesis_32x_libretro.dll": ["win", "Windows x86_64"],
+  "retro8_voxel_libretro.so": ["linux", "Linux x86_64"],
+  "project_genesis_32x_libretro_android.info": ["src", "RetroArch info"],
+  "project-genesis-32x.patch": ["src", "patch"],
+  "build_termux_32x.sh": ["src", "script de build"]
+};
+
+const DL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 0 0 1-2 2H5a2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>';
+
+function fmt(n){
+  if (n < 1024) return n + " B";
+  if (n < 1048576) return (n/1024).toFixed(1).replace(".", ",") + " KB";
+  return (n/1048576).toFixed(2).replace(".", ",") + " MB";
+}
+
+function toast(msg, isErr){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (isErr ? " err" : "");
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.className = "toast"; }, 5200);
+}
+
+function render(){
+  const box = document.getElementById("files");
+  box.innerHTML = FILES.map((f, i) => {
+    const [cls, label] = LABEL[f.name] || ["src", "arquivo"];
+    return `<div class="file" data-i="${i}">
+      <div class="info">
+        <span class="fn">${f.name}</span>
+        <span class="sha">${fmt(f.size)} · SHA-256 <b>${f.sha256}</b></span>
+      </div>
+      <span class="fp ${cls}">${label}</span>
+      <button class="dbtn" data-i="${i}">${DL_ICON} Baixar</button>
+      <div class="prog"><i></i></div>
+    </div>`;
+  }).join("");
+  box.querySelectorAll(".dbtn").forEach(b => b.addEventListener("click", () => start(+b.dataset.i)));
+}
+
+async function start(i){
+  const f = FILES[i];
+  const row = document.querySelector(`.file[data-i="${i}"]`);
+  const btn = row.querySelector(".dbtn");
+  const bar = row.querySelector(".prog i");
+  btn.disabled = true;
+  row.classList.add("busy");
+
+  try {
+    if (!f.parts) {
+      const a = document.createElement("a");
+      a.href = "downloads/" + encodeURIComponent(f.name);
+      a.download = f.name;
+      document.body.appendChild(a); a.click(); a.remove();
+      toast("Download de " + f.name + " iniciado.");
+      return;
+    }
+
+    let b64 = "";
+    for (let p = 1; p <= f.parts; p++) {
+      const url = `downloads/${f.name}.gz.b64.p${String(p).padStart(2, "0")}`;
+      const r = await fetch(url);
+      if (!r.ok) throw new Error("não foi possível baixar a parte " + p);
+      b64 += await r.text();
+      bar.style.width = (p / f.parts * 92) + "%";
+    }
+
+    bar.style.width = "97%";
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let k = 0; k < bin.length; k++) bytes[k] = bin.charCodeAt(k);
+
+    if (typeof DecompressionStream === "undefined")
+      throw new Error("este navegador não suporta descompressão; use Chrome, Firefox ou Safari recentes");
+
+    const out = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+    const blob = new Blob([out], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = f.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+
+    bar.style.width = "100%";
+    toast(f.name + " pronto (" + fmt(f.size) + ").");
+  } catch (e) {
+    toast("Falha no download: " + e.message, true);
+  } finally {
+    btn.disabled = false;
+    row.classList.remove("busy");
+    setTimeout(() => { bar.style.width = "0%"; }, 900);
+  }
+}
+
+render();
+</script>
+</body>
+</html>
